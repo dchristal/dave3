@@ -8,6 +8,7 @@ public partial class Form1 : Form
 {
     private readonly DelightfulContext _cnx;
     private readonly Dictionary<TreeNode, TreeNodeEntity> _treeNodeEntityMapping = new();
+    private int _previousRowIndex;
 
     public TreeView LastFocusedTreeView;
 /*
@@ -65,7 +66,15 @@ public partial class Form1 : Form
     private void TreeView_BeforeLabelEdit(object sender, NodeLabelEditEventArgs e)
     {
         // Cancel the label edit action, without canceling the editing of other nodes.
-        if (((Control)sender).Name[..3] != "tre") e.CancelEdit = true;
+        if (((Control)sender).Name[..3] != "tre")
+        {
+            e.CancelEdit = true;
+        }
+
+        else
+        {
+            e.CancelEdit = false;
+        }
 
         // e.CancelEdit = true;
     }
@@ -232,6 +241,7 @@ public partial class Form1 : Form
     //private async void inventoryDataGridView_Leave(object sender, EventArgs e)
     private void InventoryDataGridView_Leave(object sender, EventArgs e)
     {
+        if (inventoryDataGridView.CurrentRow != null) _previousRowIndex = inventoryDataGridView.CurrentRow.Index;
         _cnx.SaveChangesAsync();
     }
 
@@ -264,9 +274,8 @@ public partial class Form1 : Form
     private void UpdateProductNamesInInventory(int productId, string newName)
     {
         foreach (DataGridViewRow row in inventoryDataGridView.Rows)
-        {
-            if (row.DataBoundItem is Inventory inventoryItem && inventoryItem.ProductId == productId) inventoryItem.ProductName = newName;
-        }
+            if (row.DataBoundItem is Inventory inventoryItem && inventoryItem.ProductId == productId)
+                inventoryItem.ProductName = newName;
 
         inventoryDataGridView.Refresh();
     }
@@ -302,14 +311,17 @@ public partial class Form1 : Form
                         //tv1Key.Text = nKey;
                         tvName1.Text = LastFocusedTreeView.SelectedNode.Text;
                         tv1Tag.Text = nTag.ToString();
+                        tvAncestry1.Text = ancestry;
                         break;
                     case "treeView2":
                         tvName2.Text = LastFocusedTreeView.SelectedNode.Text;
                         tv2Tag.Text = nTag.ToString();
+                        tvAncestry2.Text = ancestry;
                         break;
                     case "treeView3":
                         tvName3.Text = LastFocusedTreeView.SelectedNode.Text;
                         tv3Tag.Text = nTag.ToString();
+                        tvAncestry3.Text = ancestry;
                         break;
                 }
             }
@@ -328,7 +340,8 @@ public partial class Form1 : Form
                 args.Row.Cells["LastUpdate"].Value = DateTime.Now;
                 args.Row.Cells["Quantity"].Value = 1;
             };
-            if (inventoryDataGridView.CurrentRow != null)
+            if (inventoryDataGridView.CurrentRow != null && inventoryDataGridView.CurrentRow.Index == _previousRowIndex)
+                //   if (inventoryDataGridView.CurrentRow != null)
             {
                 var treeid =
                     Convert.ToInt32(MyRegex1().Replace(LastFocusedTreeView.Name, ""));
@@ -336,14 +349,13 @@ public partial class Form1 : Form
                 switch (treeid)
                 {
                     case 1:
-                        tvAncestry1.Text = ancestry;
+
                         inventoryDataGridView.CurrentRow.Cells["ProductName"].Value =
                             LastFocusedTreeView.SelectedNode.Text;
                         inventoryDataGridView.CurrentRow.Cells["ProductId"].Value = tv1Tag.Text;
                         inventory.ProductId = Convert.ToInt32(tv1Tag.Text);
                         break;
                     case 2:
-                        tvAncestry2.Text = ancestry;
                         inventoryDataGridView.CurrentRow.Cells["LocationName"].Value =
                             LastFocusedTreeView.SelectedNode.Text;
                         inventoryDataGridView.CurrentRow.Cells["Location"].Value = tv2Tag.Text;
@@ -352,7 +364,6 @@ public partial class Form1 : Form
 
                         break;
                     case 3:
-                        tvAncestry3.Text = ancestry;
                         inventoryDataGridView.CurrentRow.Cells["CategoryName"].Value =
                             LastFocusedTreeView.SelectedNode.Text;
                         inventoryDataGridView.CurrentRow.Cells["CategoryId"].Value = tv3Tag.Text;
@@ -489,7 +500,9 @@ public partial class Form1 : Form
                 {
                 }
                 else
+                {
                     LastFocusedTreeView.SelectedNode.BeginEdit();
+                }
 
                 _cnx.SaveChanges();
             }
@@ -702,6 +715,8 @@ public partial class Form1 : Form
     private void TvFilter_CheckedChanged(object sender, EventArgs e)
     {
         var query = _cnx.Inventories.AsQueryable();
+        if (inventoryDataGridView.CurrentRow != null) _previousRowIndex = inventoryDataGridView.CurrentRow.Index;
+        _cnx.SaveChangesAsync();
 
         if (tvFilter1.Checked)
         {
@@ -774,15 +789,15 @@ public partial class Form1 : Form
     {
     }
 
+    [GeneratedRegex("TreeView", RegexOptions.IgnoreCase, "en-US")]
+    private static partial Regex MyRegex();
+
+    [GeneratedRegex("TreeView", RegexOptions.IgnoreCase, "en-US")]
+    private static partial Regex MyRegex1();
+
     public class TreeNodeTagData
     {
         public TreeNodeEntity TreeNodeEntity { get; set; }
         public int Id { get; set; }
     }
-
-    [GeneratedRegex("TreeView", RegexOptions.IgnoreCase, "en-US")]
-    private static partial Regex MyRegex();
-    [GeneratedRegex("TreeView", RegexOptions.IgnoreCase, "en-US")]
-    private static partial Regex MyRegex1();
-
 }
