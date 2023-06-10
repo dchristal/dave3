@@ -1,3 +1,5 @@
+using System.ComponentModel;
+using System.Linq.Expressions;
 using System.Text.RegularExpressions;
 using dave3.Model;
 using Microsoft.EntityFrameworkCore;
@@ -11,9 +13,9 @@ public partial class Form1 : Form
     private int _previousRowIndex;
 
     public TreeView LastFocusedTreeView;
-/*
-    private int previousRowIndex;
-*/
+    /*
+        private int previousRowIndex;
+    */
 
     public Form1()
     {
@@ -38,6 +40,10 @@ public partial class Form1 : Form
         tvFilter1.CheckedChanged += TvFilter_CheckedChanged;
         tvFilter2.CheckedChanged += TvFilter_CheckedChanged;
         tvFilter3.CheckedChanged += TvFilter_CheckedChanged;
+        tvIncludeChildren1.CheckedChanged +=TvFilter_CheckedChanged;
+        tvIncludeChildren2.CheckedChanged +=TvFilter_CheckedChanged;
+        tvIncludeChildren3.CheckedChanged +=TvFilter_CheckedChanged;
+        
 
         foreach (var treeView in treeViews)
         {
@@ -67,14 +73,10 @@ public partial class Form1 : Form
     {
         // Cancel the label edit action, without canceling the editing of other nodes.
         if (((Control)sender).Name[..3] != "tre")
-        {
             e.CancelEdit = true;
-        }
 
         else
-        {
             e.CancelEdit = false;
-        }
 
         // e.CancelEdit = true;
     }
@@ -714,33 +716,196 @@ public partial class Form1 : Form
 
     private void TvFilter_CheckedChanged(object sender, EventArgs e)
     {
-        var query = _cnx.Inventories.AsQueryable();
-        if (inventoryDataGridView.CurrentRow != null) _previousRowIndex = inventoryDataGridView.CurrentRow.Index;
-        _cnx.SaveChangesAsync();
+        tvIncludeChildren1.Enabled = tvFilter1.Checked;
 
+        // If tvFilter1 is unchecked, also uncheck tvIncludeChildren1
+        if (!tvFilter1.Checked)
+        {
+            tvIncludeChildren1.Checked = false;
+        }
+        tvIncludeChildren2.Enabled = tvFilter2.Checked;
+        if (!tvFilter2.Checked)
+        {
+            tvIncludeChildren2.Checked = false;
+        }
+        tvIncludeChildren3.Enabled = tvFilter3.Checked;
+        if (!tvFilter3.Checked)
+        {
+            tvIncludeChildren3.Checked = false;
+        }
+        FilterInventoryList();
+        //ApplyFilters();
+        //var query = _cnx.Inventories.AsQueryable();
+        //if (inventoryDataGridView.CurrentRow != null) _previousRowIndex = inventoryDataGridView.CurrentRow.Index;
+        //_cnx.SaveChangesAsync();
+
+        //if (tvFilter1.Checked)
+        //{
+        //    var tagData = (TreeNodeTagData)treeView1.SelectedNode.Tag;
+        //    var id = tagData.Id;
+        //    query = query.Where(i => i.ProductId == id);
+        //}
+
+        //if (tvFilter2.Checked)
+        //{
+        //    var tagData = (TreeNodeTagData)treeView2.SelectedNode.Tag;
+        //    var id = tagData.Id;
+
+        //    // Get all child Ids of the selected node
+        //    var childIds = GetAllChildIds(treeView2.SelectedNode);
+        //    childIds.Add(id); // Include the Id of the selected node itself
+
+        //    query = query.Where(i => childIds.Contains(i.Location));
+
+        //}
+
+        //if (tvFilter3.Checked)
+        //{
+        //    var tagData = (TreeNodeTagData)treeView3.SelectedNode.Tag;
+        //    var id = tagData.Id;
+        //    query = query.Where(i => i.CategoryId == id);
+        //}
+
+        // Get the existing list from the BindingSource
+
+        //var inventoryList = bindingSource1.DataSource as BindingList<Inventory>;
+        //inventoryList = ApplyFilter(inventoryList, treeView1, tvFilter1, tvIncludeChildren1, i => i.ProductId);
+        //inventoryList = ApplyFilter(inventoryList, treeView2, tvFilter2, tvIncludeChildren2, i => i.Location);
+        //inventoryList = ApplyFilter(inventoryList, treeView3, tvFilter3, tvIncludeChildren3, i => i.CategoryId);
+      
+
+// Now you can use inventoryList in your filtering operations
+
+
+        //query = ApplyFilter(query, treeView1, tvFilter1, tvIncludeChildren1, i => i.ProductId);
+        //query = ApplyFilter(query, treeView2, tvFilter2, tvIncludeChildren2, i => i.Location);
+        //query = ApplyFilter(query, treeView3, tvFilter3, tvIncludeChildren3, i => i.CategoryId);
+
+
+        //bindingSource1.DataSource = query.ToList();
+        inventoryDataGridView.Refresh();
+    }
+
+    private Expression<Func<Inventory, bool>> GetFilterCondition(int id, bool includeChildren,
+        Func<Inventory, int> propertySelector)
+    {
+        if (includeChildren)
+        {
+            var childIds = GetAllChildIds(treeView2.SelectedNode);
+            childIds.Add(id); // Include the Id of the selected node itself
+
+            return i => childIds.Contains(propertySelector(i));
+        }
+
+        return i => propertySelector(i) == id;
+    }
+
+    private IQueryable<Inventory> ApplyFilter(IQueryable<Inventory> query, TreeView treeView, CheckBox filterCheckBox,
+        CheckBox includeChildrenCheckBox, Func<Inventory, int> propertySelector)
+    {
+        if (filterCheckBox.Checked)
+        {
+            var tagData = (TreeNodeTagData)treeView.SelectedNode.Tag;
+            var id = tagData.Id;
+
+            var filterCondition = GetFilterCondition(id, includeChildrenCheckBox.Checked, propertySelector);
+
+            query = query.Where(filterCondition);
+        }
+
+        return query;
+    }
+    private void FilterInventoryList()
+    {
+        var inventoryList = _cnx.Inventories.Local.ToBindingList();
+
+        // Start with the full list
+        IQueryable<Inventory> filteredList = inventoryList.AsQueryable();
+
+        // Apply filters sequentially
+        filteredList = ApplyFilter(filteredList, treeView1, tvFilter1, tvIncludeChildren1, i => i.ProductId);
+        filteredList = ApplyFilter(filteredList, treeView2, tvFilter2, tvIncludeChildren2, i => i.Location);
+        filteredList = ApplyFilter(filteredList, treeView3, tvFilter3, tvIncludeChildren3, i => i.CategoryId);
+
+        // Update the BindingSource
+        bindingSource1.DataSource = new BindingList<Inventory>(filteredList.ToList());
+    }
+
+    private void ApplyFilters()
+    {
+        var originalList = _cnx.Inventories.Local.ToBindingList();
+
+        // Create a HashSet to store all child IDs
+        var childIds = new HashSet<int>();
+
+        // Add child IDs from treeView1
         if (tvFilter1.Checked)
         {
             var tagData = (TreeNodeTagData)treeView1.SelectedNode.Tag;
             var id = tagData.Id;
-            query = query.Where(i => i.ProductId == id);
+            childIds.Add(id);
+
+            if (tvIncludeChildren1.Checked)
+            {
+                childIds.UnionWith(GetAllChildIds(treeView1.SelectedNode));
+            }
         }
 
+        // Add child IDs from treeView2
         if (tvFilter2.Checked)
         {
             var tagData = (TreeNodeTagData)treeView2.SelectedNode.Tag;
             var id = tagData.Id;
-            query = query.Where(i => i.Location == id);
+            childIds.Add(id);
+
+            if (tvIncludeChildren2.Checked)
+            {
+                childIds.UnionWith(GetAllChildIds(treeView2.SelectedNode));
+            }
         }
 
+        // Add child IDs from treeView3
         if (tvFilter3.Checked)
         {
             var tagData = (TreeNodeTagData)treeView3.SelectedNode.Tag;
             var id = tagData.Id;
-            query = query.Where(i => i.CategoryId == id);
+            childIds.Add(id);
+
+            if (tvIncludeChildren3.Checked)
+            {
+                childIds.UnionWith(GetAllChildIds(treeView3.SelectedNode));
+            }
         }
 
-        bindingSource1.DataSource = query.ToList();
-        inventoryDataGridView.Refresh();
+        // Now filter the original list using the child IDs
+        var filteredList = originalList.Where(i => childIds.Contains(i.ProductId) || childIds.Contains(i.Location) || childIds.Contains(i.CategoryId)).ToList();
+
+        // Set the DataSource of the BindingSource to the filtered list
+        if(filteredList.Count > 0)
+        bindingSource1.DataSource = new BindingList<Inventory>(filteredList);
+        else
+        {
+            bindingSource1.DataSource =  _cnx.Inventories.Local.ToBindingList();
+        }
+    }
+
+
+
+
+    private List<int> GetAllChildIds(TreeNode node)
+    {
+        var childIds = new List<int>();
+
+        foreach (TreeNode childNode in node.Nodes)
+        {
+            var childTagData = (TreeNodeTagData)childNode.Tag;
+            childIds.Add(childTagData.Id);
+
+            // Recursively get the Ids of the grandchildren
+            childIds.AddRange(GetAllChildIds(childNode));
+        }
+
+        return childIds;
     }
 
     private void InventoryDataGridView_CellClick(object sender, DataGridViewCellEventArgs e)
