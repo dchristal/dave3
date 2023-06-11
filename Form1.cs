@@ -502,10 +502,17 @@ public partial class Form1 : Form
 
                 // Create a new entity and add it to the context
                 var parentEntity = _treeNodeEntityMapping[LastFocusedTreeView.SelectedNode];
+
+                // Get the highest Order value of the existing child entities
+                var maxOrder = _cnx.TreeNodeEntities.Local
+                    .Where(entity => entity.ParentId == parentEntity.Id)
+                    .Max(entity => (int?)entity.Order) ?? 0;
+
                 var newEntity = new TreeNodeEntity
                 {
                     Name = newNode.Text,
-                    ParentId = parentEntity.Id
+                    ParentId = parentEntity.Id,
+                    Order = maxOrder + 1 // Set the Order property to be one greater than the highest existing Order value
                     // Set other properties as necessary
                 };
                 _cnx.TreeNodeEntities.Add(newEntity);
@@ -527,6 +534,7 @@ public partial class Form1 : Form
                 _cnx.SaveChanges();
             }
         }
+
         else if (e.KeyCode == Keys.Delete)
         {
             // Store a reference to the selected node before deleting it
@@ -593,6 +601,19 @@ public partial class Form1 : Form
         // Swap the Order properties of the selected node and the node in the direction
         var selectedEntity = _treeNodeEntityMapping[selectedNode];
         var otherEntity = _treeNodeEntityMapping[parentNodes[index + direction]];
+        if (selectedEntity.Order == otherEntity.Order)
+        {
+            switch (direction)
+            {
+                case 1:
+                    otherEntity.Order++;
+                    break;
+                case -1:
+                    selectedEntity.Order++;
+                    break;
+
+            }   
+        }
         (selectedEntity.Order, otherEntity.Order) = (otherEntity.Order, selectedEntity.Order);
 
         // Save changes to the database
