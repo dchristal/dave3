@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using dave3.Model;
 
@@ -11,9 +12,11 @@ using dave3.Model;
 namespace dave3.Migrations
 {
     [DbContext(typeof(DelightfulContext))]
-    partial class DelightfulContextModelSnapshot : ModelSnapshot
+    [Migration("20230610233442_AddControls2")]
+    partial class AddControls2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -44,7 +47,7 @@ namespace dave3.Migrations
                     b.ToTable("Attributes");
                 });
 
-            modelBuilder.Entity("dave3.Model.ControlObject", b =>
+            modelBuilder.Entity("dave3.Model.Control", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -52,25 +55,21 @@ namespace dave3.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<float?>("ControlFloat")
+                    b.Property<float>("MyFloat")
                         .HasColumnType("real");
 
-                    b.Property<int?>("ControlInt")
+                    b.Property<int>("MyInt")
                         .HasColumnType("int");
 
-                    b.Property<string>("ControlString")
+                    b.Property<string>("MyString")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex(new[] { "Name" }, "IX_Controls_ControlName")
-                        .IsUnique()
-                        .HasFilter("[Name] IS NOT NULL");
-
-                    b.ToTable("ControlObjects");
+                    b.ToTable("Controls");
                 });
 
             modelBuilder.Entity("dave3.Model.Inventory", b =>

@@ -40,10 +40,10 @@ public partial class Form1 : Form
         tvFilter1.CheckedChanged += TvFilter_CheckedChanged;
         tvFilter2.CheckedChanged += TvFilter_CheckedChanged;
         tvFilter3.CheckedChanged += TvFilter_CheckedChanged;
-        tvIncludeChildren1.CheckedChanged +=TvFilter_CheckedChanged;
-        tvIncludeChildren2.CheckedChanged +=TvFilter_CheckedChanged;
-        tvIncludeChildren3.CheckedChanged +=TvFilter_CheckedChanged;
-        
+        tvIncludeChildren1.CheckedChanged += TvFilter_CheckedChanged;
+        tvIncludeChildren2.CheckedChanged += TvFilter_CheckedChanged;
+        tvIncludeChildren3.CheckedChanged += TvFilter_CheckedChanged;
+
 
         foreach (var treeView in treeViews)
         {
@@ -611,14 +611,49 @@ public partial class Form1 : Form
         return false;
     }
 
+    public void AddOrUpdateControlObject(string name, string? myString, int? myInt, float? myFloat)
+    {
+        // Get the existing ControlObject with the specified name
+        var controlObject = _cnx.ControlObjects.FirstOrDefault(co => co.Name == name);
+
+        if (controlObject == null)
+        {
+            // If the ControlObject doesn't exist, create a new one
+            controlObject = new ControlObject
+            {
+                Name = name,
+                ControlString = myString,
+                ControlInt = myInt,
+                ControlFloat = myFloat
+            };
+
+            // Add the new ControlObject to the DbSet
+            _cnx.ControlObjects.Add(controlObject);
+        }
+        else
+        {
+            // If the ControlObject does exist, update its properties
+            controlObject.ControlString = myString;
+            controlObject.ControlInt = myInt;
+            controlObject.ControlFloat = myFloat;
+        }
+
+        // Save changes to the database
+        _cnx.SaveChanges();
+    }
+
     private void Form1_FormClosing(object sender, FormClosingEventArgs e)
     {
-        var selectedNodePath1B4 = treeView1.SelectedNode.FullPath;
-        File.WriteAllText("nodePath1.txt", selectedNodePath1B4);
-        var selectedNodePath2B4 = treeView2.SelectedNode.FullPath;
-        File.WriteAllText("nodePath2.txt", selectedNodePath2B4);
-        var selectedNodePath3B4 = treeView3.SelectedNode.FullPath;
-        File.WriteAllText("nodePath3.txt", selectedNodePath3B4);
+        //var selectedNodePath1B4 = treeView1.SelectedNode.FullPath;
+        AddOrUpdateControlObject("nodePath1", treeView1.SelectedNode.FullPath, null, null);
+        AddOrUpdateControlObject("nodePath2", treeView2.SelectedNode.FullPath, null, null);
+        AddOrUpdateControlObject("nodePath3", treeView3.SelectedNode.FullPath, null, null);
+
+        // File.WriteAllText("nodePath1.txt", selectedNodePath1B4);
+        //var selectedNodePath2B4 = treeView2.SelectedNode.FullPath;
+        //File.WriteAllText("nodePath2.txt", selectedNodePath2B4);
+        //var selectedNodePath3B4 = treeView3.SelectedNode.FullPath;
+        //File.WriteAllText("nodePath3.txt", selectedNodePath3B4);
         try
         {
             _cnx.SaveChanges();
@@ -638,39 +673,47 @@ public partial class Form1 : Form
         //    treeView2.Nodes.Add(treeNode);
         try
         {
-            var selectedNodePath1 = File.ReadAllText("nodePath1.txt");
-            var selectedNodePath2 = File.ReadAllText("nodePath2.txt");
-            var selectedNodePath3 = File.ReadAllText("nodePath3.txt");
+            //var selectedNodePath1 = File.ReadAllText("nodePath1.txt");
+            // var selectedNodePath2 = File.ReadAllText("nodePath2.txt");
+            // var selectedNodePath3 = File.ReadAllText("nodePath3.txt");
 
-
-            var pathParts1 = selectedNodePath1.Split('\\');
-            var pathParts2 = selectedNodePath2.Split('\\');
-            var pathParts3 = selectedNodePath3.Split('\\');
-            var node1 = FindNodeByPath(treeView1.Nodes, pathParts1, 0);
-            var node2 = FindNodeByPath(treeView2.Nodes, pathParts2, 0);
-            var node3 = FindNodeByPath(treeView3.Nodes, pathParts3, 0);
-            //treeView1.ExpandAll();
-            //treeView2.ExpandAll();
-            //treeView3.ExpandAll();
-            treeView1.SelectedNode = node1;
-            ExpandParentNodes(node2);
-            treeView2.SelectedNode = node2;
-            if (node2 != null)
+            var selectedNodePath1 = _cnx.ControlObjects.FirstOrDefault(co => co.Name == "nodePath1")?.ControlString;
+            if (selectedNodePath1 != null)
             {
+                var pathParts1 = selectedNodePath1.Split('\\');
+                var node1 = FindNodeByPath(treeView1.Nodes, pathParts1, 0);
+                treeView1.SelectedNode = node1;
+            }
+
+            var selectedNodePath2 = _cnx.ControlObjects.FirstOrDefault(co => co.Name == "nodePath2")?.ControlString;
+            if (selectedNodePath2 != null)
+            {
+                var pathParts2 = selectedNodePath2.Split('\\');
+                var node2 = FindNodeByPath(treeView2.Nodes, pathParts2, 0);
+                treeView2.SelectedNode = node2;
+                ExpandParentNodes(node2);
+
                 var ancestry = Ancestry(node2);
                 tvAncestry2.Text = ancestry;
                 tvName2.Text = node2.Text;
                 tv2Tag.Text = ((TreeNodeTagData)node2.Tag).Id.ToString();
             }
 
-            ExpandParentNodes(node3);
-            treeView3.SelectedNode = node3;
-            if (node3 != null)
+            var selectedNodePath3 = _cnx.ControlObjects.FirstOrDefault(co => co.Name == "nodePath3")?.ControlString;
+
+            if (selectedNodePath3 != null)
             {
-                var ancestry3 = Ancestry(node3);
-                tvAncestry3.Text = ancestry3;
-                tvName3.Text = node3.Text;
-                tv3Tag.Text = ((TreeNodeTagData)node3.Tag).Id.ToString();
+                var pathParts3 = selectedNodePath3.Split('\\');
+                var node3 = FindNodeByPath(treeView3.Nodes, pathParts3, 0);
+                ExpandParentNodes(node3);
+                treeView3.SelectedNode = node3;
+                if (node3 != null)
+                {
+                    var ancestry3 = Ancestry(node3);
+                    tvAncestry3.Text = ancestry3;
+                    tvName3.Text = node3.Text;
+                    tv3Tag.Text = ((TreeNodeTagData)node3.Tag).Id.ToString();
+                }
             }
         }
 
@@ -719,20 +762,11 @@ public partial class Form1 : Form
         tvIncludeChildren1.Enabled = tvFilter1.Checked;
 
         // If tvFilter1 is unchecked, also uncheck tvIncludeChildren1
-        if (!tvFilter1.Checked)
-        {
-            tvIncludeChildren1.Checked = false;
-        }
+        if (!tvFilter1.Checked) tvIncludeChildren1.Checked = false;
         tvIncludeChildren2.Enabled = tvFilter2.Checked;
-        if (!tvFilter2.Checked)
-        {
-            tvIncludeChildren2.Checked = false;
-        }
+        if (!tvFilter2.Checked) tvIncludeChildren2.Checked = false;
         tvIncludeChildren3.Enabled = tvFilter3.Checked;
-        if (!tvFilter3.Checked)
-        {
-            tvIncludeChildren3.Checked = false;
-        }
+        if (!tvFilter3.Checked) tvIncludeChildren3.Checked = false;
         FilterInventoryList();
         //ApplyFilters();
         //var query = _cnx.Inventories.AsQueryable();
@@ -772,7 +806,7 @@ public partial class Form1 : Form
         //inventoryList = ApplyFilter(inventoryList, treeView1, tvFilter1, tvIncludeChildren1, i => i.ProductId);
         //inventoryList = ApplyFilter(inventoryList, treeView2, tvFilter2, tvIncludeChildren2, i => i.Location);
         //inventoryList = ApplyFilter(inventoryList, treeView3, tvFilter3, tvIncludeChildren3, i => i.CategoryId);
-      
+
 
 // Now you can use inventoryList in your filtering operations
 
@@ -815,12 +849,13 @@ public partial class Form1 : Form
 
         return query;
     }
+
     private void FilterInventoryList()
     {
         var inventoryList = _cnx.Inventories.Local.ToBindingList();
 
         // Start with the full list
-        IQueryable<Inventory> filteredList = inventoryList.AsQueryable();
+        var filteredList = inventoryList.AsQueryable();
 
         // Apply filters sequentially
         filteredList = ApplyFilter(filteredList, treeView1, tvFilter1, tvIncludeChildren1, i => i.ProductId);
@@ -845,10 +880,7 @@ public partial class Form1 : Form
             var id = tagData.Id;
             childIds.Add(id);
 
-            if (tvIncludeChildren1.Checked)
-            {
-                childIds.UnionWith(GetAllChildIds(treeView1.SelectedNode));
-            }
+            if (tvIncludeChildren1.Checked) childIds.UnionWith(GetAllChildIds(treeView1.SelectedNode));
         }
 
         // Add child IDs from treeView2
@@ -858,10 +890,7 @@ public partial class Form1 : Form
             var id = tagData.Id;
             childIds.Add(id);
 
-            if (tvIncludeChildren2.Checked)
-            {
-                childIds.UnionWith(GetAllChildIds(treeView2.SelectedNode));
-            }
+            if (tvIncludeChildren2.Checked) childIds.UnionWith(GetAllChildIds(treeView2.SelectedNode));
         }
 
         // Add child IDs from treeView3
@@ -871,25 +900,20 @@ public partial class Form1 : Form
             var id = tagData.Id;
             childIds.Add(id);
 
-            if (tvIncludeChildren3.Checked)
-            {
-                childIds.UnionWith(GetAllChildIds(treeView3.SelectedNode));
-            }
+            if (tvIncludeChildren3.Checked) childIds.UnionWith(GetAllChildIds(treeView3.SelectedNode));
         }
 
         // Now filter the original list using the child IDs
-        var filteredList = originalList.Where(i => childIds.Contains(i.ProductId) || childIds.Contains(i.Location) || childIds.Contains(i.CategoryId)).ToList();
+        var filteredList = originalList.Where(i =>
+                childIds.Contains(i.ProductId) || childIds.Contains(i.Location) || childIds.Contains(i.CategoryId))
+            .ToList();
 
         // Set the DataSource of the BindingSource to the filtered list
-        if(filteredList.Count > 0)
-        bindingSource1.DataSource = new BindingList<Inventory>(filteredList);
+        if (filteredList.Count > 0)
+            bindingSource1.DataSource = new BindingList<Inventory>(filteredList);
         else
-        {
-            bindingSource1.DataSource =  _cnx.Inventories.Local.ToBindingList();
-        }
+            bindingSource1.DataSource = _cnx.Inventories.Local.ToBindingList();
     }
-
-
 
 
     private List<int> GetAllChildIds(TreeNode node)
