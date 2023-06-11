@@ -50,6 +50,7 @@ partial class Form1
         tvIncludeChildren1 = new CheckBox();
         tvIncludeChildren2 = new CheckBox();
         tvIncludeChildren3 = new CheckBox();
+        SearchInventory = new TextBox();
         ((System.ComponentModel.ISupportInitialize)inventoryDataGridView).BeginInit();
         ((System.ComponentModel.ISupportInitialize)bindingSource1).BeginInit();
         SuspendLayout();
@@ -266,11 +267,21 @@ partial class Form1
         tvIncludeChildren3.Text = "Incl Children";
         tvIncludeChildren3.UseVisualStyleBackColor = true;
         // 
+        // SearchInventory
+        // 
+        SearchInventory.Location = new Point(947, 12);
+        SearchInventory.Name = "SearchInventory";
+        SearchInventory.Size = new Size(207, 23);
+        SearchInventory.TabIndex = 38;
+        SearchInventory.TabStop = false;
+        SearchInventory.Leave += SearchInventory_Leave;
+        // 
         // Form1
         // 
         AutoScaleDimensions = new SizeF(7F, 15F);
         AutoScaleMode = AutoScaleMode.Font;
         ClientSize = new Size(1166, 540);
+        Controls.Add(SearchInventory);
         Controls.Add(tvIncludeChildren3);
         Controls.Add(tvIncludeChildren2);
         Controls.Add(tvIncludeChildren1);
@@ -328,4 +339,5 @@ partial class Form1
     private CheckBox tvIncludeChildren1;
     private CheckBox tvIncludeChildren2;
     private CheckBox tvIncludeChildren3;
+    private TextBox SearchInventory;
 }

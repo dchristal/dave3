@@ -36,7 +36,9 @@ public partial class Form1 : Form
         LastFocusedTreeView.GotFocus += TreeView_GotFocus;
         moveUpItem.Click += (_, _) => MoveNode(-1);
         moveDownItem.Click += (_, _) => MoveNode(1);
-        searchTreeView1.Leave += SearchTreeView1_Leave;
+        searchTreeView1.Leave += SearchTreeView_Leave;
+        searchTreeView2.Leave += SearchTreeView_Leave;
+        searchTreeView3.Leave += SearchTreeView_Leave;
         tvFilter1.CheckedChanged += TvFilter_CheckedChanged;
         tvFilter2.CheckedChanged += TvFilter_CheckedChanged;
         tvFilter3.CheckedChanged += TvFilter_CheckedChanged;
@@ -202,9 +204,25 @@ public partial class Form1 : Form
         inventoryDataGridView.Columns["InventoryId"]!.Visible = false;
     }
 
-    private void SearchTreeView1_Leave(object sender, EventArgs e)
+    private void SearchTreeView_Leave(object sender, EventArgs e)
     {
-        FindAndSelectNode(searchTreeView1.Text);
+        var sb = sender as TextBox;
+
+        var searchTreeView = Convert.ToInt32(MyRegex2().Match(sb!.Name).Value);
+        switch (searchTreeView)
+        {
+            case 1:
+                LastFocusedTreeView = treeView1;
+                break;
+
+            case 2:
+                LastFocusedTreeView = treeView2;
+                break;
+            case 3:
+                LastFocusedTreeView = treeView3;
+                break;
+        }
+        FindAndSelectNode(sb.Text);
     }
 
     private void BindTreeView(TreeView tree)
@@ -343,7 +361,7 @@ public partial class Form1 : Form
                 args.Row.Cells["Quantity"].Value = 1;
             };
             if (inventoryDataGridView.CurrentRow != null && inventoryDataGridView.CurrentRow.Index == _previousRowIndex)
-                //   if (inventoryDataGridView.CurrentRow != null)
+            //   if (inventoryDataGridView.CurrentRow != null)
             {
                 var treeid =
                     Convert.ToInt32(MyRegex1().Replace(LastFocusedTreeView.Name, ""));
@@ -596,11 +614,12 @@ public partial class Form1 : Form
 
     private bool FindAndSelectNode(TreeNode node, string searchTerm)
     {
-        if (node.Text.Equals(searchTerm, StringComparison.OrdinalIgnoreCase))
+        if (node.Text.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
 
         {
             LastFocusedTreeView.SelectedNode = node;
             node.Expand();
+            LastFocusedTreeView.Focus();
             return true;
         }
 
@@ -768,55 +787,6 @@ public partial class Form1 : Form
         tvIncludeChildren3.Enabled = tvFilter3.Checked;
         if (!tvFilter3.Checked) tvIncludeChildren3.Checked = false;
         FilterInventoryList();
-        //ApplyFilters();
-        //var query = _cnx.Inventories.AsQueryable();
-        //if (inventoryDataGridView.CurrentRow != null) _previousRowIndex = inventoryDataGridView.CurrentRow.Index;
-        //_cnx.SaveChangesAsync();
-
-        //if (tvFilter1.Checked)
-        //{
-        //    var tagData = (TreeNodeTagData)treeView1.SelectedNode.Tag;
-        //    var id = tagData.Id;
-        //    query = query.Where(i => i.ProductId == id);
-        //}
-
-        //if (tvFilter2.Checked)
-        //{
-        //    var tagData = (TreeNodeTagData)treeView2.SelectedNode.Tag;
-        //    var id = tagData.Id;
-
-        //    // Get all child Ids of the selected node
-        //    var childIds = GetAllChildIds(treeView2.SelectedNode);
-        //    childIds.Add(id); // Include the Id of the selected node itself
-
-        //    query = query.Where(i => childIds.Contains(i.Location));
-
-        //}
-
-        //if (tvFilter3.Checked)
-        //{
-        //    var tagData = (TreeNodeTagData)treeView3.SelectedNode.Tag;
-        //    var id = tagData.Id;
-        //    query = query.Where(i => i.CategoryId == id);
-        //}
-
-        // Get the existing list from the BindingSource
-
-        //var inventoryList = bindingSource1.DataSource as BindingList<Inventory>;
-        //inventoryList = ApplyFilter(inventoryList, treeView1, tvFilter1, tvIncludeChildren1, i => i.ProductId);
-        //inventoryList = ApplyFilter(inventoryList, treeView2, tvFilter2, tvIncludeChildren2, i => i.Location);
-        //inventoryList = ApplyFilter(inventoryList, treeView3, tvFilter3, tvIncludeChildren3, i => i.CategoryId);
-
-
-// Now you can use inventoryList in your filtering operations
-
-
-        //query = ApplyFilter(query, treeView1, tvFilter1, tvIncludeChildren1, i => i.ProductId);
-        //query = ApplyFilter(query, treeView2, tvFilter2, tvIncludeChildren2, i => i.Location);
-        //query = ApplyFilter(query, treeView3, tvFilter3, tvIncludeChildren3, i => i.CategoryId);
-
-
-        //bindingSource1.DataSource = query.ToList();
         inventoryDataGridView.Refresh();
     }
 
@@ -915,6 +885,24 @@ public partial class Form1 : Form
             bindingSource1.DataSource = _cnx.Inventories.Local.ToBindingList();
     }
 
+    private void ApplyFilters(string searchString)
+    {
+        var originalList = _cnx.Inventories.Local.ToBindingList();
+
+        // Create a HashSet to store all child IDs
+        var childIds = new HashSet<int>();
+
+        // Now filter the original list using the child IDs
+        var filteredList = originalList.Where(i =>
+                i.Description.IndexOf(searchString, StringComparison.OrdinalIgnoreCase) >= 0)
+            .ToList();
+
+        // Set the DataSource of the BindingSource to the filtered list
+        if (filteredList.Count > 0)
+            bindingSource1.DataSource = new BindingList<Inventory>(filteredList);
+        else
+            bindingSource1.DataSource = _cnx.Inventories.Local.ToBindingList();
+    }
 
     private List<int> GetAllChildIds(TreeNode node)
     {
@@ -981,12 +969,20 @@ public partial class Form1 : Form
     [GeneratedRegex("TreeView", RegexOptions.IgnoreCase, "en-US")]
     private static partial Regex MyRegex();
 
-    [GeneratedRegex("TreeView", RegexOptions.IgnoreCase, "en-US")]
+    [GeneratedRegex("SearchTree", RegexOptions.IgnoreCase, "en-US")]
     private static partial Regex MyRegex1();
 
     public class TreeNodeTagData
     {
         public TreeNodeEntity TreeNodeEntity { get; set; }
         public int Id { get; set; }
+    }
+
+    [GeneratedRegex("\\d+")]
+    private static partial Regex MyRegex2();
+
+    private void SearchInventory_Leave(object sender, EventArgs e)
+    {
+        ApplyFilters(SearchInventory.Text);
     }
 }
