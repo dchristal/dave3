@@ -71,10 +71,10 @@ public partial class Form1 : Form
         BuildInventoryDataGridView();
     }
 
-    private void TreeView_BeforeLabelEdit(object sender, NodeLabelEditEventArgs e)
+    private void TreeView_BeforeLabelEdit(object? sender, NodeLabelEditEventArgs e)
     {
         // Cancel the label edit action, without canceling the editing of other nodes.
-        if (((Control)sender).Name[..3] != "tre")
+        if ((sender as Control)?.Name[..3] != "tre")
             e.CancelEdit = true;
 
         else
@@ -83,19 +83,22 @@ public partial class Form1 : Form
         // e.CancelEdit = true;
     }
 
-    private void InventoryDataGridView_DefaultValuesNeeded(object sender, DataGridViewRowEventArgs e)
+    private void InventoryDataGridView_DefaultValuesNeeded(object? sender, DataGridViewRowEventArgs e)
     {
         e.Row.Cells["LastUpdate"].Value = DateTime.Now;
     }
 
-    private TreeNode FindNodeByProductId(TreeNodeCollection nodes, int productId)
+    private TreeNode? FindNodeByProductId(TreeNodeCollection nodes, int productId)
     {
-        foreach (TreeNode node in nodes)
+        foreach (TreeNode? node in nodes)
         {
-            if (((TreeNodeTagData)node.Tag).Id == productId) return node;
+            if (node != null && ((TreeNodeTagData)node.Tag).Id == productId) return node;
 
-            var result = FindNodeByProductId(node.Nodes, productId);
-            if (result != null) return result;
+            if (node != null)
+            {
+                var result = FindNodeByProductId(node.Nodes, productId);
+                if (result != null) return result;
+            }
         }
 
         return null;
@@ -204,7 +207,7 @@ public partial class Form1 : Form
         inventoryDataGridView.Columns["InventoryId"]!.Visible = false;
     }
 
-    private void SearchTreeView_Leave(object sender, EventArgs e)
+    private void SearchTreeView_Leave(object? sender, EventArgs e)
     {
         var sb = sender as TextBox;
 
@@ -222,6 +225,7 @@ public partial class Form1 : Form
                 LastFocusedTreeView = treeView3;
                 break;
         }
+
         FindAndSelectNode(sb.Text);
     }
 
@@ -259,7 +263,7 @@ public partial class Form1 : Form
     }
 
     //private async void inventoryDataGridView_Leave(object sender, EventArgs e)
-    private void InventoryDataGridView_Leave(object sender, EventArgs e)
+    private void InventoryDataGridView_Leave(object? sender, EventArgs e)
     {
         if (inventoryDataGridView.CurrentRow != null) _previousRowIndex = inventoryDataGridView.CurrentRow.Index;
         _cnx.SaveChangesAsync();
@@ -300,7 +304,7 @@ public partial class Form1 : Form
         inventoryDataGridView.Refresh();
     }
 
-    private void TreeView_DragOver(object sender, DragEventArgs e)
+    private void TreeView_DragOver(object? sender, DragEventArgs e)
     {
         // Retrieve the client coordinates of the mouse position.  
         var targetPoint = LastFocusedTreeView.PointToClient(new Point(e.X, e.Y));
@@ -309,7 +313,7 @@ public partial class Form1 : Form
         LastFocusedTreeView.SelectedNode = LastFocusedTreeView.GetNodeAt(targetPoint);
     }
 
-    private void TreeView_AfterSelect(object sender, TreeViewEventArgs e)
+    private void TreeView_AfterSelect(object? sender, TreeViewEventArgs e)
     {
         try
         {
@@ -361,7 +365,7 @@ public partial class Form1 : Form
                 args.Row.Cells["Quantity"].Value = 1;
             };
             if (inventoryDataGridView.CurrentRow != null && inventoryDataGridView.CurrentRow.Index == _previousRowIndex)
-            //   if (inventoryDataGridView.CurrentRow != null)
+                //   if (inventoryDataGridView.CurrentRow != null)
             {
                 var treeid =
                     Convert.ToInt32(MyRegex1().Replace(LastFocusedTreeView.Name, ""));
@@ -402,17 +406,24 @@ public partial class Form1 : Form
         }
     }
 
-    private static string Ancestry(TreeNode node)
+    private static string Ancestry(TreeNode? node)
     {
-        var ancestry = node.Text;
-
-        while (node.Parent != null)
+        if (node != null)
         {
-            node = node.Parent;
-            ancestry = node.Text + " -> " + ancestry;
-        }
+            var ancestry = node.Text;
 
-        return ancestry;
+            while (node.Parent != null)
+            {
+                node = node.Parent;
+                ancestry = node.Text + " -> " + ancestry;
+            }
+
+            return ancestry;
+        }
+        else
+        {
+            return "";
+        }
     }
 
     //private bool ContainsNode(TreeNode node1, TreeNode node2)
@@ -427,22 +438,22 @@ public partial class Form1 : Form
     //    return ContainsNode(node1, node2.Parent);
     //}
 
-    private void TreeView_GotFocus(object sender, EventArgs e)
+    private void TreeView_GotFocus(object? sender, EventArgs e)
     {
-        LastFocusedTreeView = sender as TreeView;
+        LastFocusedTreeView = sender as TreeView ?? treeView1;
     }
 
-    private void TreeView_ItemDrag(object sender, ItemDragEventArgs e)
+    private void TreeView_ItemDrag(object? sender, ItemDragEventArgs e)
     {
         if (e.Item != null) DoDragDrop(e.Item, DragDropEffects.Move);
     }
 
-    private static void TreeView_DragEnter(object sender, DragEventArgs e)
+    private static void TreeView_DragEnter(object? sender, DragEventArgs e)
     {
         e.Effect = DragDropEffects.Move;
     }
 
-    private void TreeView_DragDrop(object sender, DragEventArgs e)
+    private void TreeView_DragDrop(object? sender, DragEventArgs e)
     {
         if (e.Data != null && e.Data.GetData(typeof(TreeNode)) is TreeNode movingNode)
         {
@@ -479,7 +490,7 @@ public partial class Form1 : Form
         }
     }
 
-    private void TreeView_KeyDown(object sender, KeyEventArgs e)
+    private void TreeView_KeyDown(object? sender, KeyEventArgs e)
     {
         if (e.KeyCode == Keys.F2)
         {
@@ -512,7 +523,8 @@ public partial class Form1 : Form
                 {
                     Name = newNode.Text,
                     ParentId = parentEntity.Id,
-                    Order = maxOrder + 1 // Set the Order property to be one greater than the highest existing Order value
+                    Order = maxOrder +
+                            1 // Set the Order property to be one greater than the highest existing Order value
                     // Set other properties as necessary
                 };
                 _cnx.TreeNodeEntities.Add(newEntity);
@@ -563,7 +575,7 @@ public partial class Form1 : Form
         }
     }
 
-    private void TreeView_AfterLabelEdit(object sender, NodeLabelEditEventArgs e)
+    private void TreeView_AfterLabelEdit(object? sender, NodeLabelEditEventArgs e)
     {
         // Update the entity when a node's text is edited
         if (e.Node != null && e.Label != null)
@@ -602,7 +614,6 @@ public partial class Form1 : Form
         var selectedEntity = _treeNodeEntityMapping[selectedNode];
         var otherEntity = _treeNodeEntityMapping[parentNodes[index + direction]];
         if (selectedEntity.Order == otherEntity.Order)
-        {
             switch (direction)
             {
                 case 1:
@@ -611,9 +622,8 @@ public partial class Form1 : Form
                 case -1:
                     selectedEntity.Order++;
                     break;
+            }
 
-            }   
-        }
         (selectedEntity.Order, otherEntity.Order) = (otherEntity.Order, selectedEntity.Order);
 
         // Save changes to the database
@@ -735,8 +745,8 @@ public partial class Form1 : Form
 
                 var ancestry = Ancestry(node2);
                 tvAncestry2.Text = ancestry;
-                tvName2.Text = node2.Text;
-                tv2Tag.Text = ((TreeNodeTagData)node2.Tag).Id.ToString();
+                tvName2.Text = node2?.Text;
+                if (node2 != null) tv2Tag.Text = ((TreeNodeTagData)node2.Tag).Id.ToString();
             }
 
             var selectedNodePath3 = _cnx.ControlObjects.FirstOrDefault(co => co.Name == "nodePath3")?.ControlString;
@@ -765,7 +775,7 @@ public partial class Form1 : Form
         //   AddNewRecord();
     }
 
-    private void ExpandParentNodes(TreeNode node)
+    private void ExpandParentNodes(TreeNode? node)
     {
         if (node == null)
             return;
@@ -777,10 +787,10 @@ public partial class Form1 : Form
         }
     }
 
-    private TreeNode FindNodeByPath(TreeNodeCollection nodes, string[] pathParts, int index)
+    private TreeNode? FindNodeByPath(TreeNodeCollection nodes, string[] pathParts, int index)
     {
-        foreach (TreeNode node in nodes)
-            if (node.Text == pathParts[index])
+        foreach (TreeNode? node in nodes)
+            if (node != null && node.Text == pathParts[index])
             {
                 if (index == pathParts.Length - 1)
                     // This is the node we're looking for
@@ -797,7 +807,7 @@ public partial class Form1 : Form
         return null;
     }
 
-    private void TvFilter_CheckedChanged(object sender, EventArgs e)
+    private void TvFilter_CheckedChanged(object? sender, EventArgs e)
     {
         tvIncludeChildren1.Enabled = tvFilter1.Checked;
 
@@ -915,7 +925,9 @@ public partial class Form1 : Form
 
         // Now filter the original list using the child IDs
         var filteredList = originalList.Where(i =>
-                i.Description.IndexOf(searchString, StringComparison.OrdinalIgnoreCase) >= 0)
+#pragma warning disable CA2249
+                i.Description != null && i.Description.IndexOf(searchString, StringComparison.OrdinalIgnoreCase) >= 0)
+#pragma warning restore CA2249
             .ToList();
 
         // Set the DataSource of the BindingSource to the filtered list
@@ -993,17 +1005,17 @@ public partial class Form1 : Form
     [GeneratedRegex("SearchTree", RegexOptions.IgnoreCase, "en-US")]
     private static partial Regex MyRegex1();
 
-    public class TreeNodeTagData
-    {
-        public TreeNodeEntity TreeNodeEntity { get; set; }
-        public int Id { get; set; }
-    }
-
     [GeneratedRegex("\\d+")]
     private static partial Regex MyRegex2();
 
     private void SearchInventory_Leave(object sender, EventArgs e)
     {
         ApplyFilters(SearchInventory.Text);
+    }
+
+    public class TreeNodeTagData
+    {
+        public TreeNodeEntity? TreeNodeEntity { get; set; }
+        public int Id { get; set; }
     }
 }

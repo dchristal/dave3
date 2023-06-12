@@ -1,6 +1,9 @@
 ﻿<?xml version='1.0' encoding='utf-8'?>
-<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)">
-  <Profiles>
-    <Profile Name="(Default)" />
-  </Profiles>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="dave3.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="DefaultConnection" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Server=192.168.68.67;Database=delightful;User Id=dave;Password=asdf;TrustServerCertificate=True</Value>
+    </Setting>
+  </Settings>
 </SettingsFile>

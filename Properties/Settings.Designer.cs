@@ -22,5 +22,18 @@ namespace dave3.Properties {
                 return defaultInstance;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("Server=192.168.68.67;Database=delightful;User Id=dave;Password=asdf;TrustServerCe" +
+            "rtificate=True")]
+        public string DefaultConnection {
+            get {
+                return ((string)(this["DefaultConnection"]));
+            }
+            set {
+                this["DefaultConnection"] = value;
+            }
+        }
     }
 }

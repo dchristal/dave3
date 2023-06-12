@@ -1,4 +1,5 @@
-﻿using System;
+﻿#nullable enable
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,6 +9,12 @@ namespace dave3.Model
 {
     public class ControlObject
     {
+ 
+        public ControlObject()
+        {
+            Name = "x";
+        }
+
         public int Id { get; set; }
 
         public string Name { get; set; }
