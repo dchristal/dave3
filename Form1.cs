@@ -11,6 +11,7 @@ public partial class Form1 : Form
     private readonly DelightfulContext _cnx;
     private readonly Dictionary<TreeNode, TreeNodeEntity> _treeNodeEntityMapping = new();
     private int _previousRowIndex;
+    private bool _enableEdit=true;
 
     public TreeView LastFocusedTreeView;
     /*
@@ -73,14 +74,16 @@ public partial class Form1 : Form
 
     private void TreeView_BeforeLabelEdit(object? sender, NodeLabelEditEventArgs e)
     {
-        // Cancel the label edit action, without canceling the editing of other nodes.
-        if ((sender as Control)?.Name[..3] == "tre")
-            e.CancelEdit = true;
+        //// Cancel the label edit action, without canceling the editing of other nodes.
+        //if ((sender as Control)?.Name[..3] == "tre")
+        //    e.CancelEdit = true;
 
-        else
-            e.CancelEdit = false;
+        //else
+        //    e.CancelEdit = false;
 
-        // e.CancelEdit = true;
+        //// e.CancelEdit = true;
+        ///
+        e.CancelEdit = !_enableEdit;
     }
 
     private void InventoryDataGridView_DefaultValuesNeeded(object? sender, DataGridViewRowEventArgs e)
@@ -498,8 +501,10 @@ public partial class Form1 : Form
         if (e.KeyCode == Keys.F2)
         {
             // Start editing the selected node when the F2 key is pressed
-            //  e.CancelEdit = false;
+             // e.CancelEdit = false;
             if (LastFocusedTreeView.SelectedNode == null) return;
+            //LastFocusedTreeView.CancelEdit = false;
+            _enableEdit = true;
             LastFocusedTreeView.SelectedNode.BeginEdit();
         }
         else if (e.KeyCode == Keys.Insert)
@@ -595,6 +600,7 @@ public partial class Form1 : Form
             // Now update the DataGridView
             UpdateProductNamesInInventory(entity.Id, e.Label);
         }
+        _enableEdit = false;
     }
 
     private void MoveNode(int direction)
