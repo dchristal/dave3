@@ -74,7 +74,7 @@ public partial class Form1 : Form
     private void TreeView_BeforeLabelEdit(object? sender, NodeLabelEditEventArgs e)
     {
         // Cancel the label edit action, without canceling the editing of other nodes.
-        if ((sender as Control)?.Name[..3] != "tre")
+        if ((sender as Control)?.Name[..3] == "tre")
             e.CancelEdit = true;
 
         else
@@ -108,6 +108,7 @@ public partial class Form1 : Form
     {
 
         inventoryDataGridView.Leave += InventoryDataGridView_Leave;
+        inventoryDataGridView.RowLeave += InventoryDataGridView_RowLeave;
 
         // Load Inventory entities from the database into memory
         _cnx.Inventories.Load();
@@ -204,8 +205,10 @@ public partial class Form1 : Form
         inventoryDataGridView.Columns["InventoryId"]!.Visible = false;
     }
 
-
-
+    private void InventoryDataGridView_RowLeave(object? sender, DataGridViewCellEventArgs e)
+    {
+        _previousRowIndex = e.RowIndex;
+    }
 
 
     private void SearchTreeView_Leave(object? sender, EventArgs e)
@@ -367,10 +370,10 @@ public partial class Form1 : Form
                 args.Row.Cells["Quantity"].Value = 1;
             };
             if (inventoryDataGridView.CurrentRow != null && inventoryDataGridView.CurrentRow.Index == _previousRowIndex)
-                //   if (inventoryDataGridView.CurrentRow != null)
+               
             {
                 var treeid =
-                    Convert.ToInt32(MyRegex1().Replace(LastFocusedTreeView.Name, ""));
+                    Convert.ToInt32(MyRegex().Replace(LastFocusedTreeView.Name, ""));
                 var inventory = (Inventory)inventoryDataGridView.CurrentRow.DataBoundItem;
                 switch (treeid)
                 {
@@ -417,7 +420,7 @@ public partial class Form1 : Form
             while (node.Parent != null)
             {
                 node = node.Parent;
-                ancestry = node.Text + " -> " + ancestry;
+                ancestry = node.Text + "/" + ancestry;
             }
 
             return ancestry;
