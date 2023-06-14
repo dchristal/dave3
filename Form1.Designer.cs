@@ -81,7 +81,7 @@ partial class Form1
         inventoryDataGridView.TabStop = false;
         inventoryDataGridView.CellClick += InventoryDataGridView_CellClick;
         inventoryDataGridView.DataError += InventoryDataGridView_DataError;
-        inventoryDataGridView.RowLeave += InventoryDataGridView_RowLeave;
+  
         // 
         // treeView2
         // 

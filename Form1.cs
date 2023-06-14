@@ -106,15 +106,12 @@ public partial class Form1 : Form
 
     private void BuildInventoryDataGridView()
     {
-        // DataGridView inventoryDataGridView = new DataGridView();
+
         inventoryDataGridView.Leave += InventoryDataGridView_Leave;
+
         // Load Inventory entities from the database into memory
         _cnx.Inventories.Load();
-        /*update inventoryDatagridView ProductName from inventory TreeNodeEntities  on productid = id
-                                                     LocationName from         TreeNodeEntities on Location = id
-        CategoryName from         TreeNodeEntities on CategoryID = id
-         
-         */
+
 
         foreach (var item in _cnx.Inventories)
         {
@@ -207,6 +204,10 @@ public partial class Form1 : Form
         inventoryDataGridView.Columns["InventoryId"]!.Visible = false;
     }
 
+
+
+
+
     private void SearchTreeView_Leave(object? sender, EventArgs e)
     {
         var sb = sender as TextBox;
@@ -263,9 +264,10 @@ public partial class Form1 : Form
     }
 
     //private async void inventoryDataGridView_Leave(object sender, EventArgs e)
-    private void InventoryDataGridView_Leave(object? sender, EventArgs e)
+    private void InventoryDataGridView_Leave(object? o, EventArgs e)
     {
-        if (inventoryDataGridView.CurrentRow != null) _previousRowIndex = inventoryDataGridView.CurrentRow.Index;
+       bindingSource1.EndEdit();
+        //if (inventoryDataGridView.CurrentRow != null) _previousRowIndex = inventoryDataGridView.CurrentRow.Index;
         _cnx.SaveChangesAsync();
     }
 
@@ -420,10 +422,8 @@ public partial class Form1 : Form
 
             return ancestry;
         }
-        else
-        {
-            return "";
-        }
+
+        return "";
     }
 
     //private bool ContainsNode(TreeNode node1, TreeNode node2)
@@ -809,6 +809,9 @@ public partial class Form1 : Form
 
     private void TvFilter_CheckedChanged(object? sender, EventArgs e)
     {
+        bindingSource1.EndEdit();
+        _cnx.SaveChangesAsync();
+       // _cnx.SaveChanges();
         tvIncludeChildren1.Enabled = tvFilter1.Checked;
 
         // If tvFilter1 is unchecked, also uncheck tvIncludeChildren1
@@ -853,6 +856,8 @@ public partial class Form1 : Form
 
     private void FilterInventoryList()
     {
+        bindingSource1.EndEdit();
+        _cnx.SaveChangesAsync();
         var inventoryList = _cnx.Inventories.Local.ToBindingList();
 
         // Start with the full list
@@ -863,8 +868,16 @@ public partial class Form1 : Form
         filteredList = ApplyFilter(filteredList, treeView2, tvFilter2, tvIncludeChildren2, i => i.Location);
         filteredList = ApplyFilter(filteredList, treeView3, tvFilter3, tvIncludeChildren3, i => i.CategoryId);
 
+   
         // Update the BindingSource
-        bindingSource1.DataSource = new BindingList<Inventory>(filteredList.ToList());
+        //bindingSource1.DataSource = _cnx.Inventories.Local.ToBindingList();
+        //bindingSource1.DataSource = new BindingList<Inventory>(filteredList.ToList());
+        bindingSource1.DataSource = _cnx.Inventories.Local.ToBindingList().Where(i => filteredList.Contains(i));
+
+        // Set the DataSource of the DataGridView to the BindingSource
+        inventoryDataGridView.DataSource = bindingSource1;
+
+      
     }
 
     private void ApplyFilters()
@@ -910,10 +923,8 @@ public partial class Form1 : Form
             .ToList();
 
         // Set the DataSource of the BindingSource to the filtered list
-        if (filteredList.Count > 0)
-            bindingSource1.DataSource = new BindingList<Inventory>(filteredList);
-        else
-            bindingSource1.DataSource = _cnx.Inventories.Local.ToBindingList();
+        _cnx.SaveChanges();
+        bindingSource1.DataSource = filteredList.Count > 0 ? new BindingList<Inventory>(filteredList) : _cnx.Inventories.Local.ToBindingList();
     }
 
     private void ApplyFilters(string searchString)
@@ -991,9 +1002,7 @@ public partial class Form1 : Form
         AddNewRecord();
     }
 
-    private void InventoryDataGridView_RowLeave(object sender, DataGridViewCellEventArgs e)
-    {
-    }
+
 
     private void InventoryDataGridView_DataError(object sender, DataGridViewDataErrorEventArgs e)
     {
