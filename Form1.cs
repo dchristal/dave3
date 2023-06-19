@@ -1,7 +1,9 @@
 using System.ComponentModel;
 using System.Linq.Expressions;
 using System.Text.RegularExpressions;
+using System.Windows.Forms;
 using dave3.Model;
+using Equin.ApplicationFramework;
 using Microsoft.EntityFrameworkCore;
 
 namespace dave3;
@@ -10,8 +12,9 @@ public partial class Form1 : Form
 {
     private readonly DelightfulContext _cnx;
     private readonly Dictionary<TreeNode, TreeNodeEntity> _treeNodeEntityMapping = new();
+    private bool _enableEdit = true;
     private int _previousRowIndex;
-    private bool _enableEdit=true;
+    private bool _isDirty;
 
     public TreeView LastFocusedTreeView;
     /*
@@ -72,7 +75,7 @@ public partial class Form1 : Form
         BuildInventoryDataGridView();
     }
 
-    private void TreeView_BeforeLabelEdit(object? sender, NodeLabelEditEventArgs e)
+    private void TreeView_BeforeLabelEdit(object sender, NodeLabelEditEventArgs e)
     {
         //// Cancel the label edit action, without canceling the editing of other nodes.
         //if ((sender as Control)?.Name[..3] == "tre")
@@ -82,18 +85,18 @@ public partial class Form1 : Form
         //    e.CancelEdit = false;
 
         //// e.CancelEdit = true;
-        ///
+        /// 
         e.CancelEdit = !_enableEdit;
     }
 
-    private void InventoryDataGridView_DefaultValuesNeeded(object? sender, DataGridViewRowEventArgs e)
+    private void InventoryDataGridView_DefaultValuesNeeded(object sender, DataGridViewRowEventArgs e)
     {
         e.Row.Cells["LastUpdate"].Value = DateTime.Now;
     }
 
-    private TreeNode? FindNodeByProductId(TreeNodeCollection nodes, int productId)
+    private TreeNode FindNodeByProductId(TreeNodeCollection nodes, int productId)
     {
-        foreach (TreeNode? node in nodes)
+        foreach (TreeNode node in nodes)
         {
             if (node != null && ((TreeNodeTagData)node.Tag).Id == productId) return node;
 
@@ -107,11 +110,66 @@ public partial class Form1 : Form
         return null;
     }
 
+    private void InventoryDataGridView_UserDeletingRow(object sender, DataGridViewRowCancelEventArgs e)
+    {
+        return;
+        var inventoryView = (ObjectView<Inventory>)e.Row.DataBoundItem;
+        var inventory = inventoryView.Object;
+        _cnx.Inventories.Remove(inventory);
+        _cnx.SaveChanges();
+        inventoryDataGridView.Refresh();   
+    }
+
+    private void InventoryDataGridView_RowValidating(object sender, DataGridViewCellCancelEventArgs e)
+    {
+        return;
+        var dataGridView = (DataGridView)sender;
+        var row = dataGridView.Rows[e.RowIndex];
+
+        if (row.Cells["Description"].Value == null)
+        {
+            // Cancel the event and select the cell to be edited by the user.
+            e.Cancel = true;
+            dataGridView.CurrentCell = row.Cells["Description"];
+            MessageBox.Show("Description cannot be empty.");
+        }
+    }
+    private void inventoryDataGridView_CellBeginEdit(object sender, DataGridViewCellCancelEventArgs e)
+    {
+        var dataGridView = (DataGridView)sender;
+        var row = dataGridView.Rows[e.RowIndex];
+
+        if (row.IsNewRow)
+        {
+            _isDirty = true;
+        }
+    }
+    private void InventoryDataGridView_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.KeyCode == Keys.Delete)
+        {
+            foreach (DataGridViewRow row in inventoryDataGridView.SelectedRows)
+            {
+                var inventoryView = (ObjectView<Inventory>)row.DataBoundItem;
+                var inventory = inventoryView.Object;
+                _cnx.Inventories.Remove(inventory);
+            }
+            _cnx.SaveChanges();
+            FilterInventoryList();
+        }
+    }
+
+
     private void BuildInventoryDataGridView()
     {
-
         inventoryDataGridView.Leave += InventoryDataGridView_Leave;
         inventoryDataGridView.RowLeave += InventoryDataGridView_RowLeave;
+        inventoryDataGridView.RowValidating += InventoryDataGridView_RowValidating;
+        inventoryDataGridView.RowValidated += InventoryDataGridView_RowValidated;
+        inventoryDataGridView.UserDeletingRow += InventoryDataGridView_UserDeletingRow;
+        inventoryDataGridView.CellBeginEdit += inventoryDataGridView_CellBeginEdit;
+        inventoryDataGridView.KeyDown += InventoryDataGridView_KeyDown;
+
 
         // Load Inventory entities from the database into memory
         _cnx.Inventories.Load();
@@ -138,7 +196,12 @@ public partial class Form1 : Form
         //var bindingSource = new BindingSource();
 
         // Set the DataSource of the BindingSource to the local entities
-        bindingSource1.DataSource = _cnx.Inventories.Local.ToBindingList();
+        var inv = _cnx.Inventories.ToList();
+        var view = new BindingListView<Inventory>(inv);
+        bindingSource1.DataSource = view;
+        //dataGridView1.DataSource = view;
+
+        //bindingSource1.DataSource = _cnx.Inventories.Local.ToBindingList();
 
         // Set the DataSource of the DataGridView to the BindingSource
         inventoryDataGridView.DataSource = bindingSource1;
@@ -208,13 +271,39 @@ public partial class Form1 : Form
         inventoryDataGridView.Columns["InventoryId"]!.Visible = false;
     }
 
-    private void InventoryDataGridView_RowLeave(object? sender, DataGridViewCellEventArgs e)
+
+    private void InventoryDataGridView_RowValidated(object sender, DataGridViewCellEventArgs e)
+    {
+        var dataGridView = (DataGridView)sender;
+        var row = dataGridView.Rows[e.RowIndex];
+
+        if (_isDirty)
+        {
+            // The row is a new row that the user has just finished entering data for.
+            // A new Inventory object has been created and added to the binding source.
+            // You can retrieve this object using the DataBoundItem property of the row.
+
+            var objectView = (ObjectView<Inventory>)row.DataBoundItem;
+            var inventory = objectView.Object;
+
+            // Now you can add the new Inventory object to the DbContext.
+
+            _cnx.Inventories.Add(inventory);
+            _isDirty = false;
+        }
+
+        _cnx.SaveChanges();
+    }
+
+
+
+    private void InventoryDataGridView_RowLeave(object sender, DataGridViewCellEventArgs e)
     {
         _previousRowIndex = e.RowIndex;
     }
 
 
-    private void SearchTreeView_Leave(object? sender, EventArgs e)
+    private void SearchTreeView_Leave(object sender, EventArgs e)
     {
         var sb = sender as TextBox;
 
@@ -270,9 +359,9 @@ public partial class Form1 : Form
     }
 
     //private async void inventoryDataGridView_Leave(object sender, EventArgs e)
-    private void InventoryDataGridView_Leave(object? o, EventArgs e)
+    private void InventoryDataGridView_Leave(object o, EventArgs e)
     {
-       bindingSource1.EndEdit();
+        bindingSource1.EndEdit();
         //if (inventoryDataGridView.CurrentRow != null) _previousRowIndex = inventoryDataGridView.CurrentRow.Index;
         _cnx.SaveChangesAsync();
     }
@@ -312,7 +401,7 @@ public partial class Form1 : Form
         inventoryDataGridView.Refresh();
     }
 
-    private void TreeView_DragOver(object? sender, DragEventArgs e)
+    private void TreeView_DragOver(object sender, DragEventArgs e)
     {
         // Retrieve the client coordinates of the mouse position.  
         var targetPoint = LastFocusedTreeView.PointToClient(new Point(e.X, e.Y));
@@ -321,7 +410,7 @@ public partial class Form1 : Form
         LastFocusedTreeView.SelectedNode = LastFocusedTreeView.GetNodeAt(targetPoint);
     }
 
-    private void TreeView_AfterSelect(object? sender, TreeViewEventArgs e)
+    private void TreeView_AfterSelect(object sender, TreeViewEventArgs e)
     {
         try
         {
@@ -373,11 +462,11 @@ public partial class Form1 : Form
                 args.Row.Cells["Quantity"].Value = 1;
             };
             if (inventoryDataGridView.CurrentRow != null && inventoryDataGridView.CurrentRow.Index == _previousRowIndex)
-               
+
             {
                 var treeid =
                     Convert.ToInt32(MyRegex().Replace(LastFocusedTreeView.Name, ""));
-                var inventory = (Inventory)inventoryDataGridView.CurrentRow.DataBoundItem;
+                var inventory = inventoryDataGridView.CurrentRow.DataBoundItem as Inventory;
                 switch (treeid)
                 {
                     case 1:
@@ -385,13 +474,13 @@ public partial class Form1 : Form
                         inventoryDataGridView.CurrentRow.Cells["ProductName"].Value =
                             LastFocusedTreeView.SelectedNode.Text;
                         inventoryDataGridView.CurrentRow.Cells["ProductId"].Value = tv1Tag.Text;
-                        inventory.ProductId = Convert.ToInt32(tv1Tag.Text);
+                        if (inventory != null) inventory.ProductId = Convert.ToInt32(tv1Tag.Text);
                         break;
                     case 2:
                         inventoryDataGridView.CurrentRow.Cells["LocationName"].Value =
                             LastFocusedTreeView.SelectedNode.Text;
                         inventoryDataGridView.CurrentRow.Cells["Location"].Value = tv2Tag.Text;
-                        inventory.Location = Convert.ToInt32(tv2Tag.Text);
+                        if (inventory != null) inventory.Location = Convert.ToInt32(tv2Tag.Text);
                         //save inventory changes
 
                         break;
@@ -399,11 +488,11 @@ public partial class Form1 : Form
                         inventoryDataGridView.CurrentRow.Cells["CategoryName"].Value =
                             LastFocusedTreeView.SelectedNode.Text;
                         inventoryDataGridView.CurrentRow.Cells["CategoryId"].Value = tv3Tag.Text;
-                        inventory.CategoryId = Convert.ToInt32(tv3Tag.Text);
+                        if (inventory != null) inventory.CategoryId = Convert.ToInt32(tv3Tag.Text);
                         break;
                 }
 
-                _cnx.Entry(inventory).State = EntityState.Modified;
+                if (inventory != null) _cnx.Entry((object)inventory).State = EntityState.Modified;
 
                 _cnx.SaveChanges();
             }
@@ -414,7 +503,7 @@ public partial class Form1 : Form
         }
     }
 
-    private static string Ancestry(TreeNode? node)
+    private static string Ancestry(TreeNode node)
     {
         if (node != null)
         {
@@ -444,22 +533,22 @@ public partial class Form1 : Form
     //    return ContainsNode(node1, node2.Parent);
     //}
 
-    private void TreeView_GotFocus(object? sender, EventArgs e)
+    private void TreeView_GotFocus(object sender, EventArgs e)
     {
         LastFocusedTreeView = sender as TreeView ?? treeView1;
     }
 
-    private void TreeView_ItemDrag(object? sender, ItemDragEventArgs e)
+    private void TreeView_ItemDrag(object sender, ItemDragEventArgs e)
     {
         if (e.Item != null) DoDragDrop(e.Item, DragDropEffects.Move);
     }
 
-    private static void TreeView_DragEnter(object? sender, DragEventArgs e)
+    private static void TreeView_DragEnter(object sender, DragEventArgs e)
     {
         e.Effect = DragDropEffects.Move;
     }
 
-    private void TreeView_DragDrop(object? sender, DragEventArgs e)
+    private void TreeView_DragDrop(object sender, DragEventArgs e)
     {
         if (e.Data != null && e.Data.GetData(typeof(TreeNode)) is TreeNode movingNode)
         {
@@ -496,12 +585,12 @@ public partial class Form1 : Form
         }
     }
 
-    private void TreeView_KeyDown(object? sender, KeyEventArgs e)
+    private void TreeView_KeyDown(object sender, KeyEventArgs e)
     {
         if (e.KeyCode == Keys.F2)
         {
             // Start editing the selected node when the F2 key is pressed
-             // e.CancelEdit = false;
+            // e.CancelEdit = false;
             if (LastFocusedTreeView.SelectedNode == null) return;
             //LastFocusedTreeView.CancelEdit = false;
             _enableEdit = true;
@@ -583,7 +672,7 @@ public partial class Form1 : Form
         }
     }
 
-    private void TreeView_AfterLabelEdit(object? sender, NodeLabelEditEventArgs e)
+    private void TreeView_AfterLabelEdit(object sender, NodeLabelEditEventArgs e)
     {
         // Update the entity when a node's text is edited
         if (e.Node != null && e.Label != null)
@@ -600,6 +689,7 @@ public partial class Form1 : Form
             // Now update the DataGridView
             UpdateProductNamesInInventory(entity.Id, e.Label);
         }
+
         _enableEdit = false;
     }
 
@@ -670,7 +760,7 @@ public partial class Form1 : Form
         return false;
     }
 
-    public void AddOrUpdateControlObject(string name, string? myString, int? myInt, float? myFloat)
+    public void AddOrUpdateControlObject(string name, string myString, int? myInt, float? myFloat)
     {
         // Get the existing ControlObject with the specified name
         var controlObject = _cnx.ControlObjects.FirstOrDefault(co => co.Name == name);
@@ -723,7 +813,7 @@ public partial class Form1 : Form
             throw;
         }
 
-        _cnx.Dispose();
+        //    _cnx.Dispose();
     }
 
     private void Form1_Load(object sender, EventArgs e)
@@ -784,7 +874,7 @@ public partial class Form1 : Form
         //   AddNewRecord();
     }
 
-    private void ExpandParentNodes(TreeNode? node)
+    private void ExpandParentNodes(TreeNode node)
     {
         if (node == null)
             return;
@@ -796,9 +886,9 @@ public partial class Form1 : Form
         }
     }
 
-    private TreeNode? FindNodeByPath(TreeNodeCollection nodes, string[] pathParts, int index)
+    private TreeNode FindNodeByPath(TreeNodeCollection nodes, string[] pathParts, int index)
     {
-        foreach (TreeNode? node in nodes)
+        foreach (TreeNode node in nodes)
             if (node != null && node.Text == pathParts[index])
             {
                 if (index == pathParts.Length - 1)
@@ -816,19 +906,18 @@ public partial class Form1 : Form
         return null;
     }
 
-    private void TvFilter_CheckedChanged(object? sender, EventArgs e)
+    private void TvFilter_CheckedChanged(object sender, EventArgs e)
     {
         bindingSource1.EndEdit();
         _cnx.SaveChangesAsync();
-       // _cnx.SaveChanges();
+        // _cnx.SaveChanges();
         tvIncludeChildren1.Enabled = tvFilter1.Checked;
-
-        // If tvFilter1 is unchecked, also uncheck tvIncludeChildren1
         if (!tvFilter1.Checked) tvIncludeChildren1.Checked = false;
         tvIncludeChildren2.Enabled = tvFilter2.Checked;
         if (!tvFilter2.Checked) tvIncludeChildren2.Checked = false;
         tvIncludeChildren3.Enabled = tvFilter3.Checked;
         if (!tvFilter3.Checked) tvIncludeChildren3.Checked = false;
+
         FilterInventoryList();
         inventoryDataGridView.Refresh();
     }
@@ -847,47 +936,163 @@ public partial class Form1 : Form
         return i => propertySelector(i) == id;
     }
 
-    private IQueryable<Inventory> ApplyFilter(IQueryable<Inventory> query, TreeView treeView, CheckBox filterCheckBox,
+    //private IQueryable<Inventory> ApplyFilter(IQueryable<Inventory> query, TreeView treeView, CheckBox filterCheckBox,
+    //    CheckBox includeChildrenCheckBox, Func<Inventory, int> propertySelector)
+    //{
+    //    if (filterCheckBox.Checked)
+    //    {
+    //        var tagData = (TreeNodeTagData)treeView.SelectedNode.Tag;
+    //        var id = tagData.Id;
+
+    //        var filterCondition = GetFilterCondition(id, includeChildrenCheckBox.Checked, propertySelector);
+
+    //        query = query.Where(filterCondition);
+    //    }
+
+    //    return query;
+    //}
+    //private IQueryable<Inventory> ApplyFilter(IQueryable<Inventory> query, TreeView treeView, CheckBox filterCheckBox,
+    //    CheckBox includeChildrenCheckBox, string propertyName)
+    //{
+    //    if (filterCheckBox.Checked)
+    //    {
+    //        var tagData = (TreeNodeTagData)treeView.SelectedNode.Tag;
+    //        var id = tagData.Id;
+
+    //        switch (propertyName)
+    //        {
+    //            case "ProductId":
+    //                query = query.Where(i => i.ProductId == id);
+    //                break;
+    //            case "Location":
+    //                query = query.Where(i => i.Location == id);
+    //                break;
+    //            case "CategoryId":
+    //                query = query.Where(i => i.CategoryId == id);
+    //                break;
+    //        }
+
+    //        if (includeChildrenCheckBox.Checked)
+    //        {
+    //            var childIds = GetAllChildIds(treeView.SelectedNode);
+    //            childIds.Add(id); // Include the Id of the selected node itself
+
+    //            switch (propertyName)
+    //            {
+    //                case "ProductId":
+    //                    query = query.Where(i => childIds.Contains(i.ProductId));
+    //                    break;
+    //                case "Location":
+    //                    query = query.Where(i => childIds.Contains(i.Location));
+    //                    break;
+    //                case "CategoryId":
+    //                    query = query.Where(i => childIds.Contains(i.CategoryId));
+    //                    break;
+    //            }
+    //        }
+    //    }
+
+    //    return query;
+    //}
+
+    private HashSet<int> ApplyFilter(TreeView treeView, CheckBox filterCheckBox,
         CheckBox includeChildrenCheckBox, Func<Inventory, int> propertySelector)
     {
+        var ids = new HashSet<int>();
+
         if (filterCheckBox.Checked)
         {
             var tagData = (TreeNodeTagData)treeView.SelectedNode.Tag;
             var id = tagData.Id;
 
-            var filterCondition = GetFilterCondition(id, includeChildrenCheckBox.Checked, propertySelector);
+            // Add the ID of the selected node itself
+            ids.Add(id);
 
-            query = query.Where(filterCondition);
+            if (includeChildrenCheckBox.Checked)
+            {
+                // Add the IDs of all child nodes
+                var childIds = GetAllChildIds(treeView.SelectedNode);
+                ids.UnionWith(childIds);
+            }
         }
 
-        return query;
+        return ids;
     }
+
+
+    //private void FilterInventoryList()
+    //{
+    //    // End any pending edits
+    //    bindingSource1.EndEdit();
+    //    _cnx.SaveChanges();
+    //    // Apply filters directly on the DbSet
+    //    var filteredQuery = _cnx.Inventories.AsQueryable();
+
+    //    var filteredList = inventoryList.AsQueryable();
+
+
+    //    //filteredQuery = ApplyFilter(filteredQuery, treeView1, tvFilter1, tvIncludeChildren1, i => i.ProductId);
+    //    //filteredQuery = ApplyFilter(filteredQuery, treeView2, tvFilter2, tvIncludeChildren2, i => i.Location);
+    //    //filteredQuery = ApplyFilter(filteredQuery, treeView3, tvFilter3, tvIncludeChildren3, i => i.CategoryId);
+
+    //    filteredList = ApplyFilter(filteredList, treeView1, tvFilter1, tvIncludeChildren1, "ProductId");
+    //    filteredList = ApplyFilter(filteredList, treeView2, tvFilter2, tvIncludeChildren2, "Location");
+    //    filteredList = ApplyFilter(filteredList, treeView3, tvFilter3, tvIncludeChildren3, "CategoryId");
+
+
+    //    // Load the filtered entities into the local context
+    //    filteredQuery.Load();
+
+    //    // Update the BindingSource
+    //    bindingSource1.DataSource = _cnx.Inventories.Local.ToBindingList();
+
+    //    // Set the DataSource of the DataGridView to the BindingSource
+    //    inventoryDataGridView.DataSource = bindingSource1;
+    //}
 
     private void FilterInventoryList()
     {
-        bindingSource1.EndEdit();
-        _cnx.SaveChangesAsync();
-        var inventoryList = _cnx.Inventories.Local.ToBindingList();
+        //bindingSource1.EndEdit();
+        //_cnx.SaveChanges();
+        //var inventoryList = _cnx.Inventories.Local.ToBindingList();
 
-        // Start with the full list
-        var filteredList = inventoryList.AsQueryable();
+        //// Start with the full list
+        //var filteredList = inventoryList.AsQueryable();
 
-        // Apply filters sequentially
-        filteredList = ApplyFilter(filteredList, treeView1, tvFilter1, tvIncludeChildren1, i => i.ProductId);
-        filteredList = ApplyFilter(filteredList, treeView2, tvFilter2, tvIncludeChildren2, i => i.Location);
-        filteredList = ApplyFilter(filteredList, treeView3, tvFilter3, tvIncludeChildren3, i => i.CategoryId);
+        //// Apply filters sequentially
+        //filteredList = ApplyFilter(filteredList, treeView1, tvFilter1, tvIncludeChildren1, "ProductId");
+        //filteredList = ApplyFilter(filteredList, treeView2, tvFilter2, tvIncludeChildren2, "Location");
+        //filteredList = ApplyFilter(filteredList, treeView3, tvFilter3, tvIncludeChildren3, "CategoryId");
 
-   
-        // Update the BindingSource
-        //bindingSource1.DataSource = _cnx.Inventories.Local.ToBindingList();
+        //// Update the BindingSource
         //bindingSource1.DataSource = new BindingList<Inventory>(filteredList.ToList());
-        bindingSource1.DataSource = _cnx.Inventories.Local.ToBindingList().Where(i => filteredList.Contains(i));
 
-        // Set the DataSource of the DataGridView to the BindingSource
-        inventoryDataGridView.DataSource = bindingSource1;
+        //// Set the DataSource of the DataGridView to the BindingSource
+        //inventoryDataGridView.DataSource = bindingSource1;
+        var selectedProductIds = ApplyFilter(treeView1, tvFilter1, tvIncludeChildren1, i => i.ProductId);
+        var selectedLocations = ApplyFilter(treeView2, tvFilter2, tvIncludeChildren2, i => i.Location);
+        var selectedCategoryIds = ApplyFilter(treeView3, tvFilter3, tvIncludeChildren3, i => i.CategoryId);
+        var bindingListView = new BindingListView<Inventory>(_cnx.Inventories.Local.ToList());
 
-      
+        if (!selectedProductIds.Any() && !selectedLocations.Any() && !selectedCategoryIds.Any())
+            bindingListView.RemoveFilter();
+        else
+            bindingListView.ApplyFilter(i => selectedProductIds.Contains(i.ProductId)
+                                             || selectedLocations.Contains(i.Location)
+                                             || selectedCategoryIds.Contains(i.CategoryId));
+
+
+        // Assign to BindingSource
+        bindingSource1.DataSource = bindingListView;
+
+
+        //bindingSource1.Filter = $"ProductId IN ({string.Join(", ", selectedProductIds)}) OR " +
+        //                        $"Location IN ({string.Join(", ", selectedLocations)}) OR " +
+        //                        $"CategoryId IN ({string.Join(", ", selectedCategoryIds)})";
+
+        inventoryDataGridView.Refresh();
     }
+
 
     private void ApplyFilters()
     {
@@ -933,7 +1138,9 @@ public partial class Form1 : Form
 
         // Set the DataSource of the BindingSource to the filtered list
         _cnx.SaveChanges();
-        bindingSource1.DataSource = filteredList.Count > 0 ? new BindingList<Inventory>(filteredList) : _cnx.Inventories.Local.ToBindingList();
+        bindingSource1.DataSource = filteredList.Count > 0
+            ? new BindingList<Inventory>(filteredList)
+            : _cnx.Inventories.Local.ToBindingList();
     }
 
     private void ApplyFilters(string searchString)
@@ -983,7 +1190,7 @@ public partial class Form1 : Form
         // case "CategoryId":
         // tvAncestry3.Text = getancestrybynodeid(e.value)
         // end switch
-
+        return;
         switch (inventoryDataGridView.CurrentCell.OwningColumn.Name)
         {
             case "ProductName":
@@ -1012,7 +1219,6 @@ public partial class Form1 : Form
     }
 
 
-
     private void InventoryDataGridView_DataError(object sender, DataGridViewDataErrorEventArgs e)
     {
     }
@@ -1033,7 +1239,7 @@ public partial class Form1 : Form
 
     public class TreeNodeTagData
     {
-        public TreeNodeEntity? TreeNodeEntity { get; set; }
+        public TreeNodeEntity TreeNodeEntity { get; set; }
         public int Id { get; set; }
     }
 }

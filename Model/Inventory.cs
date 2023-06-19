@@ -42,9 +42,9 @@ public class Inventory
     public int InventoryId { get; set; }
 
 
-    [NotMapped] public string ProductName { get; set; }
+    [NotMapped] public string? ProductName { get; set; }
 
-    [NotMapped] public string LocationName { get; set; }
+    [NotMapped] public string? LocationName { get; set; }
 
-    [NotMapped] public string CategoryName { get; set; }
+    [NotMapped] public string? CategoryName { get; set; }
 }

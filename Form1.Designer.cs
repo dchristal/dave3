@@ -59,7 +59,7 @@ partial class Form1
         // 
         treeView1.Location = new Point(15, 57);
         treeView1.Name = "treeView1";
-        treeView1.Size = new Size(303, 292);
+        treeView1.Size = new Size(303, 182);
         treeView1.TabIndex = 0;
         // 
         // searchTreeView1
@@ -73,33 +73,32 @@ partial class Form1
         // inventoryDataGridView
         // 
         inventoryDataGridView.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-        inventoryDataGridView.Location = new Point(15, 385);
+        inventoryDataGridView.Location = new Point(15, 273);
         inventoryDataGridView.Name = "inventoryDataGridView";
         inventoryDataGridView.RowTemplate.Height = 25;
-        inventoryDataGridView.Size = new Size(1139, 168);
+        inventoryDataGridView.Size = new Size(1139, 342);
         inventoryDataGridView.TabIndex = 3;
         inventoryDataGridView.TabStop = false;
         inventoryDataGridView.CellClick += InventoryDataGridView_CellClick;
         inventoryDataGridView.DataError += InventoryDataGridView_DataError;
-  
         // 
         // treeView2
         // 
         treeView2.Location = new Point(324, 58);
         treeView2.Name = "treeView2";
-        treeView2.Size = new Size(303, 292);
+        treeView2.Size = new Size(303, 182);
         treeView2.TabIndex = 1;
         // 
         // treeView3
         // 
         treeView3.Location = new Point(633, 57);
         treeView3.Name = "treeView3";
-        treeView3.Size = new Size(303, 292);
+        treeView3.Size = new Size(303, 182);
         treeView3.TabIndex = 2;
         // 
         // tv3Tag
         // 
-        tv3Tag.Location = new Point(630, 326);
+        tv3Tag.Location = new Point(630, 214);
         tv3Tag.Name = "tv3Tag";
         tv3Tag.Size = new Size(100, 23);
         tv3Tag.TabIndex = 22;
@@ -108,7 +107,7 @@ partial class Form1
         // 
         // tv2Tag
         // 
-        tv2Tag.Location = new Point(321, 326);
+        tv2Tag.Location = new Point(321, 214);
         tv2Tag.Name = "tv2Tag";
         tv2Tag.Size = new Size(100, 23);
         tv2Tag.TabIndex = 21;
@@ -117,7 +116,7 @@ partial class Form1
         // 
         // tv1Tag
         // 
-        tv1Tag.Location = new Point(12, 326);
+        tv1Tag.Location = new Point(12, 214);
         tv1Tag.Name = "tv1Tag";
         tv1Tag.Size = new Size(100, 23);
         tv1Tag.TabIndex = 20;
@@ -126,7 +125,7 @@ partial class Form1
         // 
         // tvName1
         // 
-        tvName1.Location = new Point(117, 327);
+        tvName1.Location = new Point(117, 215);
         tvName1.Name = "tvName1";
         tvName1.Size = new Size(198, 23);
         tvName1.TabIndex = 23;
@@ -135,7 +134,7 @@ partial class Form1
         // 
         // tvName2
         // 
-        tvName2.Location = new Point(426, 326);
+        tvName2.Location = new Point(426, 214);
         tvName2.Name = "tvName2";
         tvName2.Size = new Size(198, 23);
         tvName2.TabIndex = 24;
@@ -144,7 +143,7 @@ partial class Form1
         // 
         // tvName3
         // 
-        tvName3.Location = new Point(736, 326);
+        tvName3.Location = new Point(736, 214);
         tvName3.Name = "tvName3";
         tvName3.Size = new Size(198, 23);
         tvName3.TabIndex = 25;
@@ -153,7 +152,7 @@ partial class Form1
         // 
         // tvAncestry1
         // 
-        tvAncestry1.Location = new Point(15, 356);
+        tvAncestry1.Location = new Point(15, 244);
         tvAncestry1.Name = "tvAncestry1";
         tvAncestry1.Size = new Size(303, 23);
         tvAncestry1.TabIndex = 26;
@@ -161,7 +160,7 @@ partial class Form1
         // 
         // tvAncestry2
         // 
-        tvAncestry2.Location = new Point(324, 356);
+        tvAncestry2.Location = new Point(324, 244);
         tvAncestry2.Name = "tvAncestry2";
         tvAncestry2.Size = new Size(303, 23);
         tvAncestry2.TabIndex = 27;
@@ -169,7 +168,7 @@ partial class Form1
         // 
         // tvAncestry3
         // 
-        tvAncestry3.Location = new Point(633, 355);
+        tvAncestry3.Location = new Point(633, 243);
         tvAncestry3.Name = "tvAncestry3";
         tvAncestry3.Size = new Size(303, 23);
         tvAncestry3.TabIndex = 28;
@@ -280,7 +279,7 @@ partial class Form1
         // 
         AutoScaleDimensions = new SizeF(7F, 15F);
         AutoScaleMode = AutoScaleMode.Font;
-        ClientSize = new Size(1166, 540);
+        ClientSize = new Size(1166, 627);
         Controls.Add(SearchInventory);
         Controls.Add(tvIncludeChildren3);
         Controls.Add(tvIncludeChildren2);
