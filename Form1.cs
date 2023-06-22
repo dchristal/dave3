@@ -169,6 +169,7 @@ public partial class Form1 : Form
         inventoryDataGridView.UserDeletingRow += InventoryDataGridView_UserDeletingRow;
         inventoryDataGridView.CellBeginEdit += inventoryDataGridView_CellBeginEdit;
         inventoryDataGridView.KeyDown += InventoryDataGridView_KeyDown;
+        inventoryDataGridView.CellEnter += InventoryDataGridView_CellEnter;
 
 
         // Load Inventory entities from the database into memory
@@ -269,8 +270,27 @@ public partial class Form1 : Form
         inventoryDataGridView.Columns["LOCATION"]!.Visible = false;
         inventoryDataGridView.Columns["CATEGORYID"]!.Visible = false;
         inventoryDataGridView.Columns["InventoryId"]!.Visible = false;
+
+   
     }
 
+    private void InventoryDataGridView_CellEnter(object sender, DataGridViewCellEventArgs e)
+    {
+        // Check if the cell is in the column you want to skip
+        if (inventoryDataGridView.CurrentCell.ColumnIndex > 17 && inventoryDataGridView.SelectedRows.Count == 0)  //Columns[e.ColumnIndex].Name == "ProductName")
+        {
+            // Check if there are more rows below
+            if (e.RowIndex + 1 < inventoryDataGridView.RowCount)
+            {
+                BeginInvoke(new MethodInvoker(() =>
+                {
+                    inventoryDataGridView.CurrentCell = inventoryDataGridView[4, e.RowIndex + 1];
+                }));
+            }
+        }
+    }
+
+  
 
     private void InventoryDataGridView_RowValidated(object sender, DataGridViewCellEventArgs e)
     {
