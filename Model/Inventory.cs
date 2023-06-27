@@ -31,6 +31,7 @@ public class Inventory
     public float? Length { get; set; }
     public float? Width { get; set; }
     public float? Height { get; set; }
+    public float? Diameter { get; set; }
     public float? Pitch { get; set; }
     public float? Volts { get; set; }
     public float? Amps { get; set; }

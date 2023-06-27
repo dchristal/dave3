@@ -157,6 +157,17 @@ public partial class Form1 : Form
             _cnx.SaveChanges();
             FilterInventoryList();
         }
+        else if (e.Control && e.KeyCode == Keys.OemQuotes) // Check if Ctrl+' is pressed
+        {
+            var currentCell = inventoryDataGridView.CurrentCell;
+            if (currentCell != null && currentCell.RowIndex > 0) // Check if it's not the first row
+            {
+                var cellAbove = inventoryDataGridView[currentCell.ColumnIndex, currentCell.RowIndex - 1];
+                currentCell.Value = cellAbove.Value;
+                e.Handled = true; // Mark the event as handled
+                _cnx.SaveChanges();
+            }
+        }
     }
 
 
@@ -217,6 +228,7 @@ public partial class Form1 : Form
         inventoryDataGridView.Columns["Description"]!.Width = 150; //Description
         inventoryDataGridView.Columns["Quantity"]!.Width = smallWidth; //qty
         inventoryDataGridView.Columns["Material"]!.Width = 80;
+        inventoryDataGridView.Columns["Diameter"]!.Width = smallWidth;
         inventoryDataGridView.Columns["Length"]!.Width = smallWidth;
         inventoryDataGridView.Columns["Width"]!.Width = smallWidth;
         inventoryDataGridView.Columns["Height"]!.Width = smallWidth;
@@ -238,14 +250,15 @@ public partial class Form1 : Form
         inventoryDataGridView.Columns["Description"].DisplayIndex = 5;
         inventoryDataGridView.Columns["Quantity"].DisplayIndex = 6;
         inventoryDataGridView.Columns["Material"].DisplayIndex = 7;
-        inventoryDataGridView.Columns["Length"].DisplayIndex = 8;
-        inventoryDataGridView.Columns["Width"].DisplayIndex = 9;
-        inventoryDataGridView.Columns["Height"].DisplayIndex = 10;
-        inventoryDataGridView.Columns["Weight"].DisplayIndex = 11;
-        inventoryDataGridView.Columns["Pitch"].DisplayIndex = 12;
-        inventoryDataGridView.Columns["Volts"].DisplayIndex = 13;
-        inventoryDataGridView.Columns["Amps"].DisplayIndex = 14;
-        inventoryDataGridView.Columns["Watts"].DisplayIndex = 15;
+        inventoryDataGridView.Columns["Diameter"].DisplayIndex = 8;
+        inventoryDataGridView.Columns["Length"].DisplayIndex = 9;
+        inventoryDataGridView.Columns["Width"].DisplayIndex = 10;
+        inventoryDataGridView.Columns["Height"].DisplayIndex = 11;
+        inventoryDataGridView.Columns["Weight"].DisplayIndex = 12;
+        inventoryDataGridView.Columns["Pitch"].DisplayIndex = 13;
+        inventoryDataGridView.Columns["Volts"].DisplayIndex = 14;
+        inventoryDataGridView.Columns["Amps"].DisplayIndex = 15;
+        inventoryDataGridView.Columns["Watts"].DisplayIndex = 16;
 
 
         inventoryDataGridView.Columns["Quantity"].HeaderText = @"Qty";
@@ -257,6 +270,7 @@ public partial class Form1 : Form
         inventoryDataGridView.Columns["Description"].HeaderText = @"Desc";
         //inventoryDataGridView.Columns["Material"].HeaderText = "Mat";
         inventoryDataGridView.Columns["Length"].HeaderText = @"L";
+        inventoryDataGridView.Columns["Diameter"].HeaderText = @"D";
         inventoryDataGridView.Columns["Width"].HeaderText = @"W";
         inventoryDataGridView.Columns["Height"].HeaderText = @"H";
         inventoryDataGridView.Columns["Weight"].HeaderText = @"Wt";
