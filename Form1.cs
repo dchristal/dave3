@@ -1,7 +1,6 @@
 using System.ComponentModel;
 using System.Linq.Expressions;
 using System.Text.RegularExpressions;
-using System.Windows.Forms;
 using dave3.Model;
 using Equin.ApplicationFramework;
 using Microsoft.EntityFrameworkCore;
@@ -13,8 +12,8 @@ public partial class Form1 : Form
     private readonly DelightfulContext _cnx;
     private readonly Dictionary<TreeNode, TreeNodeEntity> _treeNodeEntityMapping = new();
     private bool _enableEdit = true;
-    private int _previousRowIndex;
     private bool _isDirty;
+    private int _previousRowIndex;
 
     public TreeView LastFocusedTreeView;
     /*
@@ -117,33 +116,18 @@ public partial class Form1 : Form
         var inventory = inventoryView.Object;
         _cnx.Inventories.Remove(inventory);
         _cnx.SaveChanges();
-        inventoryDataGridView.Refresh();   
+        inventoryDataGridView.Refresh();
     }
 
-    private void InventoryDataGridView_RowValidating(object sender, DataGridViewCellCancelEventArgs e)
-    {
-        return;
-        var dataGridView = (DataGridView)sender;
-        var row = dataGridView.Rows[e.RowIndex];
 
-        if (row.Cells["Description"].Value == null)
-        {
-            // Cancel the event and select the cell to be edited by the user.
-            e.Cancel = true;
-            dataGridView.CurrentCell = row.Cells["Description"];
-            MessageBox.Show("Description cannot be empty.");
-        }
-    }
-    private void inventoryDataGridView_CellBeginEdit(object sender, DataGridViewCellCancelEventArgs e)
+    private void InventoryDataGridView_CellBeginEdit(object sender, DataGridViewCellCancelEventArgs e)
     {
         var dataGridView = (DataGridView)sender;
         var row = dataGridView.Rows[e.RowIndex];
 
-        if (row.IsNewRow)
-        {
-            _isDirty = true;
-        }
+        if (row.IsNewRow) _isDirty = true;
     }
+
     private void InventoryDataGridView_KeyDown(object sender, KeyEventArgs e)
     {
         if (e.KeyCode == Keys.Delete)
@@ -154,6 +138,7 @@ public partial class Form1 : Form
                 var inventory = inventoryView.Object;
                 _cnx.Inventories.Remove(inventory);
             }
+
             _cnx.SaveChanges();
             FilterInventoryList();
         }
@@ -170,17 +155,45 @@ public partial class Form1 : Form
         }
     }
 
+    private void InventoryDataGridView_ColumnHeaderMouseClick(object sender, DataGridViewCellMouseEventArgs e)
+    {
+        var validValues = new[] { 1, 2, 3 };
+        if (validValues.Contains(inventoryDataGridView.Columns[e.ColumnIndex].DisplayIndex))
+        {
+            var rows = inventoryDataGridView.Rows;
+            if (rows.Count < 8)
+                foreach (DataGridViewRow r in inventoryDataGridView.Rows)
+                    switch (inventoryDataGridView.Columns[e.ColumnIndex].DisplayIndex)
+                    {
+                        case 1:
+                            r.Cells[0].Value = tv1Tag.Text;
+                            r.Cells["ProductName"].Value = tvName1.Text;
+                            break;
+                        case 2:
+                            r.Cells[1].Value = tv2Tag.Text;
+                            r.Cells["LocationName"].Value = tvName2.Text;
+                            break;
+                        case 3:
+                            r.Cells[2].Value = tv3Tag.Text;
+                            r.Cells["CategoryName"].Value = tvName3.Text;
+                            break;
+                    } // value is 1, 2, or 3
+            _cnx.SaveChanges();
+        }
+    }
+
 
     private void BuildInventoryDataGridView()
     {
         inventoryDataGridView.Leave += InventoryDataGridView_Leave;
         inventoryDataGridView.RowLeave += InventoryDataGridView_RowLeave;
-        inventoryDataGridView.RowValidating += InventoryDataGridView_RowValidating;
+        //      inventoryDataGridView.RowValidating += InventoryDataGridView_RowValidating;
         inventoryDataGridView.RowValidated += InventoryDataGridView_RowValidated;
         inventoryDataGridView.UserDeletingRow += InventoryDataGridView_UserDeletingRow;
-        inventoryDataGridView.CellBeginEdit += inventoryDataGridView_CellBeginEdit;
+        inventoryDataGridView.CellBeginEdit += InventoryDataGridView_CellBeginEdit;
         inventoryDataGridView.KeyDown += InventoryDataGridView_KeyDown;
         inventoryDataGridView.CellEnter += InventoryDataGridView_CellEnter;
+        inventoryDataGridView.ColumnHeaderMouseClick += InventoryDataGridView_ColumnHeaderMouseClick;
 
 
         // Load Inventory entities from the database into memory
@@ -284,27 +297,22 @@ public partial class Form1 : Form
         inventoryDataGridView.Columns["LOCATION"]!.Visible = false;
         inventoryDataGridView.Columns["CATEGORYID"]!.Visible = false;
         inventoryDataGridView.Columns["InventoryId"]!.Visible = false;
-
-   
     }
+
 
     private void InventoryDataGridView_CellEnter(object sender, DataGridViewCellEventArgs e)
     {
         // Check if the cell is in the column you want to skip
-        if (inventoryDataGridView.CurrentCell.ColumnIndex > 17 && inventoryDataGridView.SelectedRows.Count == 0)  //Columns[e.ColumnIndex].Name == "ProductName")
-        {
+        if (inventoryDataGridView.CurrentCell.ColumnIndex > 17 &&
+            inventoryDataGridView.SelectedRows.Count == 0) //Columns[e.ColumnIndex].Name == "ProductName")
             // Check if there are more rows below
             if (e.RowIndex + 1 < inventoryDataGridView.RowCount)
-            {
                 BeginInvoke(new MethodInvoker(() =>
                 {
                     inventoryDataGridView.CurrentCell = inventoryDataGridView[4, e.RowIndex + 1];
                 }));
-            }
-        }
     }
 
-  
 
     private void InventoryDataGridView_RowValidated(object sender, DataGridViewCellEventArgs e)
     {
@@ -328,7 +336,6 @@ public partial class Form1 : Form
 
         _cnx.SaveChanges();
     }
-
 
 
     private void InventoryDataGridView_RowLeave(object sender, DataGridViewCellEventArgs e)
