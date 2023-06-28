@@ -309,7 +309,12 @@ public partial class Form1 : Form
             if (e.RowIndex + 1 < inventoryDataGridView.RowCount)
                 BeginInvoke(new MethodInvoker(() =>
                 {
-                    inventoryDataGridView.CurrentCell = inventoryDataGridView[4, e.RowIndex + 1];
+                    try { 
+                     inventoryDataGridView.CurrentCell = inventoryDataGridView[4, e.RowIndex + 1];
+                    }
+                    catch
+                    { 
+                    }
                 }));
     }
 
