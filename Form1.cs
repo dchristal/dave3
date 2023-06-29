@@ -161,8 +161,18 @@ public partial class Form1 : Form
         if (validValues.Contains(inventoryDataGridView.Columns[e.ColumnIndex].DisplayIndex))
         {
             var rows = inventoryDataGridView.Rows;
-            if (rows.Count < 8)
+            var controlObject = _cnx.ControlObjects.FirstOrDefault(co => co.Name == "AutoBulkUpdateMax");
+            var updateMax = controlObject?.ControlInt;
+            bool proceed = rows.Count < updateMax;
+            if (!proceed)
+            {
+                var result = MessageBox.Show("There are " + updateMax + " or more rows. Do you want to continue?", "Confirmation", MessageBoxButtons.YesNo);
+                proceed = result == DialogResult.Yes;
+            }
+            if (proceed)
+            {
                 foreach (DataGridViewRow r in inventoryDataGridView.Rows)
+                {
                     switch (inventoryDataGridView.Columns[e.ColumnIndex].DisplayIndex)
                     {
                         case 1:
@@ -178,9 +188,12 @@ public partial class Form1 : Form
                             r.Cells["CategoryName"].Value = tvName3.Text;
                             break;
                     } // value is 1, 2, or 3
-            _cnx.SaveChanges();
+                }
+                _cnx.SaveChanges();
+            }
         }
     }
+
 
 
     private void BuildInventoryDataGridView()
