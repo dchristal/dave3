@@ -9,14 +9,7 @@ namespace dave3.Model
 {
     public class ControlObject
     {
- 
-        public ControlObject()
-        {
-            Name = "x";
-        }
-
-        public int Id { get; set; }
-
+       
         public string Name { get; set; }
         public string? ControlString { get; set; }
         public int? ControlInt { get; set; }

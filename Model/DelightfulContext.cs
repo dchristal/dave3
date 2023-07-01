@@ -51,11 +51,11 @@ public partial class DelightfulContext : DbContext
             entity.HasIndex(e => new { e.ProductId, e.Location, e.CategoryId, e.Description },
                 "IX_Inventories_ProductId_Location_Category_Desc").IsUnique();
         });
-
         modelBuilder.Entity<ControlObject>(entity =>
         {
-            entity.HasIndex(e => e.Name, "IX_Controls_ControlName").IsUnique();
+            entity.HasKey(e => e.Name);
         });
+
 
         // modelBuilder.Entity<InventoryView>(entity =>
         // {

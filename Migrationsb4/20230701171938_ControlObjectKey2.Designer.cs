@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using dave3.Model;
 
@@ -11,9 +12,11 @@ using dave3.Model;
 namespace dave3.Migrations
 {
     [DbContext(typeof(DelightfulContext))]
-    partial class DelightfulContextModelSnapshot : ModelSnapshot
+    [Migration("20230701171938_ControlObjectKey2")]
+    partial class ControlObjectKey2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -46,8 +49,11 @@ namespace dave3.Migrations
 
             modelBuilder.Entity("dave3.Model.ControlObject", b =>
                 {
-                    b.Property<string>("Name")
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<float?>("ControlFloat")
                         .HasColumnType("real");
@@ -58,7 +64,14 @@ namespace dave3.Migrations
                     b.Property<string>("ControlString")
                         .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("Name");
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex(new[] { "Name" }, "IX_Controls_ControlName")
+                        .IsUnique();
 
                     b.ToTable("ControlObjects");
                 });

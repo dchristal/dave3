@@ -23,9 +23,12 @@ public partial class Form1 : Form
     public Form1()
     {
         InitializeComponent();
+
+
         KeyPreview = true;
         _cnx = new DelightfulContext();
         LastFocusedTreeView = treeView1;
+        Width = _cnx.ControlObjects.Find("Form1Width").ControlInt ?? 800;
 
         var treeViews = new List<TreeView> { treeView1, treeView2, treeView3 };
         // Create the context menu
@@ -163,16 +166,17 @@ public partial class Form1 : Form
             var rows = inventoryDataGridView.Rows;
             var controlObject = _cnx.ControlObjects.FirstOrDefault(co => co.Name == "AutoBulkUpdateMax");
             var updateMax = controlObject?.ControlInt;
-            bool proceed = rows.Count < updateMax;
+            var proceed = rows.Count < updateMax;
             if (!proceed)
             {
-                var result = MessageBox.Show("There are " + updateMax + " or more rows. Do you want to continue?", "Confirmation", MessageBoxButtons.YesNo);
+                var result = MessageBox.Show("There are " + updateMax + " or more rows. Do you want to continue?",
+                    "Confirmation", MessageBoxButtons.YesNo);
                 proceed = result == DialogResult.Yes;
             }
+
             if (proceed)
             {
                 foreach (DataGridViewRow r in inventoryDataGridView.Rows)
-                {
                     switch (inventoryDataGridView.Columns[e.ColumnIndex].DisplayIndex)
                     {
                         case 1:
@@ -188,12 +192,11 @@ public partial class Form1 : Form
                             r.Cells["CategoryName"].Value = tvName3.Text;
                             break;
                     } // value is 1, 2, or 3
-                }
+
                 _cnx.SaveChanges();
             }
         }
     }
-
 
 
     private void BuildInventoryDataGridView()
@@ -252,7 +255,8 @@ public partial class Form1 : Form
         inventoryDataGridView.Columns["LocationName"]!.Width = 100;
         inventoryDataGridView.Columns["CategoryName"]!.Width = 100;
         inventoryDataGridView.Columns["LastUpdate"]!.Width = 70;
-        inventoryDataGridView.Columns["Description"]!.Width = 150; //Description
+        inventoryDataGridView.Columns["Description"]!.Width = _cnx.ControlObjects.Find("DescWidth").ControlInt ?? 150;
+        ; //Description
         inventoryDataGridView.Columns["Quantity"]!.Width = smallWidth; //qty
         inventoryDataGridView.Columns["Material"]!.Width = 80;
         inventoryDataGridView.Columns["Diameter"]!.Width = smallWidth;
@@ -322,11 +326,12 @@ public partial class Form1 : Form
             if (e.RowIndex + 1 < inventoryDataGridView.RowCount)
                 BeginInvoke(new MethodInvoker(() =>
                 {
-                    try { 
-                     inventoryDataGridView.CurrentCell = inventoryDataGridView[4, e.RowIndex + 1];
+                    try
+                    {
+                        inventoryDataGridView.CurrentCell = inventoryDataGridView[4, e.RowIndex + 1];
                     }
                     catch
-                    { 
+                    {
                     }
                 }));
     }
@@ -872,8 +877,38 @@ public partial class Form1 : Form
             throw;
         }
 
+        UpdateControlObject("Form1Width", Width);
+        UpdateControlObject("DescWidth", inventoryDataGridView.Columns[4].Width);
+
+
         //    _cnx.Dispose();
     }
+
+    public void UpdateControlObject(string key, object value)
+    {
+        var controlObject = _cnx.ControlObjects.Find(key);
+        if (controlObject != null)
+        {
+            switch (value)
+            {
+                case int intValue:
+                    controlObject.ControlInt = intValue;
+                    break;
+                case float floatValue:
+                    controlObject.ControlFloat = floatValue;
+                    break;
+                case string stringValue:
+                    controlObject.ControlString = stringValue;
+                    break;
+                default:
+                    throw new ArgumentException("Unsupported value type.");
+            }
+
+            _cnx.ControlObjects.Update(controlObject);
+            _cnx.SaveChanges();
+        }
+    }
+
 
     private void Form1_Load(object sender, EventArgs e)
     {
