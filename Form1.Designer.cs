@@ -26,11 +26,11 @@ partial class Form1
     private void InitializeComponent()
     {
         components = new System.ComponentModel.Container();
-        treeView1 = new TreeView();
+        treeView1 = new MyTreeView();
         searchTreeView1 = new TextBox();
         inventoryDataGridView = new DataGridView();
-        treeView2 = new TreeView();
-        treeView3 = new TreeView();
+        treeView2 = new MyTreeView();
+        treeView3 = new MyTreeView();
         tv3Tag = new TextBox();
         tv2Tag = new TextBox();
         tv1Tag = new TextBox();
@@ -73,7 +73,7 @@ partial class Form1
         // inventoryDataGridView
         // 
         inventoryDataGridView.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-        inventoryDataGridView.Location = new Point(15, 273);
+        inventoryDataGridView.Location = new Point(12, 327);
         inventoryDataGridView.Name = "inventoryDataGridView";
         inventoryDataGridView.RowTemplate.Height = 25;
         inventoryDataGridView.Size = new Size(1139, 342);
@@ -154,23 +154,23 @@ partial class Form1
         // 
         tvAncestry1.Location = new Point(15, 244);
         tvAncestry1.Name = "tvAncestry1";
-        tvAncestry1.Size = new Size(303, 23);
+        tvAncestry1.Size = new Size(917, 23);
         tvAncestry1.TabIndex = 26;
         tvAncestry1.TabStop = false;
         // 
         // tvAncestry2
         // 
-        tvAncestry2.Location = new Point(324, 244);
+        tvAncestry2.Location = new Point(117, 273);
         tvAncestry2.Name = "tvAncestry2";
-        tvAncestry2.Size = new Size(303, 23);
+        tvAncestry2.Size = new Size(917, 23);
         tvAncestry2.TabIndex = 27;
         tvAncestry2.TabStop = false;
         // 
         // tvAncestry3
         // 
-        tvAncestry3.Location = new Point(633, 243);
+        tvAncestry3.Location = new Point(235, 302);
         tvAncestry3.Name = "tvAncestry3";
-        tvAncestry3.Size = new Size(303, 23);
+        tvAncestry3.Size = new Size(917, 23);
         tvAncestry3.TabIndex = 28;
         tvAncestry3.TabStop = false;
         // 
@@ -279,7 +279,7 @@ partial class Form1
         // 
         AutoScaleDimensions = new SizeF(7F, 15F);
         AutoScaleMode = AutoScaleMode.Font;
-        ClientSize = new Size(1166, 627);
+        ClientSize = new Size(1166, 659);
         Controls.Add(SearchInventory);
         Controls.Add(tvIncludeChildren3);
         Controls.Add(tvIncludeChildren2);
@@ -314,11 +314,11 @@ partial class Form1
         PerformLayout();
     }
     #endregion
-    private TreeView treeView1;
+    private MyTreeView treeView1;
     private TextBox searchTreeView1;
     private DataGridView inventoryDataGridView;
-    private TreeView treeView2;
-    private TreeView treeView3;
+    private MyTreeView treeView2;
+    private MyTreeView treeView3;
     private TextBox tv3Tag;
     private TextBox tv2Tag;
     private TextBox tv1Tag;

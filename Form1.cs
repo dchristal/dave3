@@ -12,6 +12,7 @@ public partial class Form1 : Form
     private readonly DelightfulContext _cnx;
     private readonly Dictionary<TreeNode, TreeNodeEntity> _treeNodeEntityMapping = new();
     private bool _enableEdit = true;
+    private bool _filtering;
     private bool _isDirty;
     private int _previousRowIndex;
 
@@ -169,7 +170,7 @@ public partial class Form1 : Form
             var proceed = rows.Count < updateMax;
             if (!proceed)
             {
-                var result = MessageBox.Show("There are " + updateMax + " or more rows. Do you want to continue?",
+                var result = MessageBox.Show("Do you really want to modify all " + rows + "?",
                     "Confirmation", MessageBoxButtons.YesNo);
                 proceed = result == DialogResult.Yes;
             }
@@ -226,12 +227,12 @@ public partial class Form1 : Form
 
         // Populate [NotMapped] Inventory properties
 
-        foreach (var inventory in _cnx.Inventories.Local)
-        {
-            var correspondingNode = FindNodeByProductId(treeView1.Nodes, inventory.ProductId);
+        //foreach (var inventory in _cnx.Inventories.Local)
+        //{
+        //    var correspondingNode = FindNodeByProductId(treeView1.Nodes, inventory.ProductId);
 
-            if (correspondingNode != null) inventory.ProductName = correspondingNode.Text;
-        }
+        //    if (correspondingNode != null) inventory.ProductName = correspondingNode.Text;
+        //}
 
         // Create a new BindingSource
         //var bindingSource = new BindingSource();
@@ -253,7 +254,7 @@ public partial class Form1 : Form
         inventoryDataGridView.Columns["ProductId"]!.Width = 20;
         inventoryDataGridView.Columns["ProductName"]!.Width = 100;
         inventoryDataGridView.Columns["LocationName"]!.Width = 100;
-        inventoryDataGridView.Columns["CategoryName"]!.Width = 100;
+        inventoryDataGridView.Columns["CategoryName"]!.Visible = false; //.Width = 100;
         inventoryDataGridView.Columns["LastUpdate"]!.Width = 70;
         inventoryDataGridView.Columns["Description"]!.Width = _cnx.ControlObjects.Find("DescWidth").ControlInt ?? 150;
         ; //Description
@@ -334,6 +335,19 @@ public partial class Form1 : Form
                     {
                     }
                 }));
+        if (!_filtering)
+        {
+            var row = inventoryDataGridView.Rows[e.RowIndex];
+            var tn = _cnx.TreeNodeEntities.Find(row.Cells["ProductId"].Value);
+            tvAncestry1.Text = Ancestry(tn);
+            SelectNode(treeView1, tvAncestry1.Text);
+            tn = _cnx.TreeNodeEntities.Find(row.Cells["Location"].Value);
+            tvAncestry2.Text = Ancestry(tn);
+            SelectNode(treeView2, tvAncestry2.Text);
+            tn = _cnx.TreeNodeEntities.Find(row.Cells["CategoryId"].Value);
+            tvAncestry3.Text = Ancestry(tn);
+            SelectNode(treeView3, tvAncestry3.Text);
+        }
     }
 
 
@@ -585,6 +599,25 @@ public partial class Form1 : Form
         return "";
     }
 
+    private static string Ancestry(TreeNodeEntity entity)
+    {
+        if (entity != null)
+        {
+            var ancestry = entity.Name;
+
+            while (entity.Parent != null)
+            {
+                entity = entity.Parent;
+                ancestry = entity.Name + "/" + ancestry;
+            }
+
+            return ancestry;
+        }
+
+        return "";
+    }
+
+
     //private bool ContainsNode(TreeNode node1, TreeNode node2)
     //{
     //    // Check the parent node of the second node.  
@@ -666,7 +699,7 @@ public partial class Form1 : Form
             // (or as a root node if no node is selected)
             // (or do nothing if the TreeView has no nodes)
             // handle tagData on insert
-
+            var treeId = Convert.ToInt32(MyRegex().Replace(LastFocusedTreeView.Name, ""));
             if (LastFocusedTreeView.SelectedNode != null)
             {
                 var newNode = new TreeNode("New node");
@@ -684,6 +717,7 @@ public partial class Form1 : Form
                 {
                     Name = newNode.Text,
                     ParentId = parentEntity.Id,
+                    TreeId = treeId,
                     Order = maxOrder +
                             1 // Set the Order property to be one greater than the highest existing Order value
                     // Set other properties as necessary
@@ -734,6 +768,37 @@ public partial class Form1 : Form
                 }
             }
         }
+    }
+
+    public void SelectNode(TreeView treeView, string path)
+    {
+        treeView.CollapseAll();
+        var names = path.Split('/');
+        var nodes = treeView.Nodes;
+        TreeNode node = null;
+
+        foreach (var name in names)
+        {
+            node = FindNode(nodes, name);
+            if (node == null)
+                return; // Node not found
+            nodes = node.Nodes;
+        }
+
+        if (node != null)
+        {
+            treeView.SelectedNode = node;
+            // node.Expand();
+            treeView.SelectedNode.EnsureVisible();
+        }
+    }
+
+    private TreeNode FindNode(TreeNodeCollection nodes, string name)
+    {
+        foreach (TreeNode node in nodes)
+            if (node.Text == name)
+                return node;
+        return null; // Node not found
     }
 
     private void TreeView_AfterLabelEdit(object sender, NodeLabelEditEventArgs e)
@@ -952,8 +1017,8 @@ public partial class Form1 : Form
                 treeView3.SelectedNode = node3;
                 if (node3 != null)
                 {
-                    var ancestry3 = Ancestry(node3);
-                    tvAncestry3.Text = ancestry3;
+                    var ancestry = Ancestry(node3);
+                    tvAncestry3.Text = ancestry;
                     tvName3.Text = node3.Text;
                     tv3Tag.Text = ((TreeNodeTagData)node3.Tag).Id.ToString();
                 }
@@ -1002,6 +1067,7 @@ public partial class Form1 : Form
 
     private void TvFilter_CheckedChanged(object sender, EventArgs e)
     {
+        _filtering = true;
         bindingSource1.EndEdit();
         _cnx.SaveChangesAsync();
         // _cnx.SaveChanges();
@@ -1014,6 +1080,7 @@ public partial class Form1 : Form
 
         FilterInventoryList();
         inventoryDataGridView.Refresh();
+        _filtering = false;
     }
 
     private Expression<Func<Inventory, bool>> GetFilterCondition(int id, bool includeChildren,
@@ -1276,27 +1343,6 @@ public partial class Form1 : Form
 
     private void InventoryDataGridView_CellClick(object sender, DataGridViewCellEventArgs e)
     {
-        // switch owningcolumn.name
-        // case "ProductId":
-        // tvAncestry1.Text = getancestrybynodeid(e.value)
-        // case "Location":
-        // tvAncestry2.Text = getancestrybynodeid(e.value)
-        // case "CategoryId":
-        // tvAncestry3.Text = getancestrybynodeid(e.value)
-        // end switch
-        return;
-        switch (inventoryDataGridView.CurrentCell.OwningColumn.Name)
-        {
-            case "ProductName":
-                tvAncestry1.Text = Ancestry(treeView1.SelectedNode);
-                break;
-            case "LocationName":
-                tvAncestry2.Text = Ancestry(treeView2.SelectedNode);
-                break;
-            case "CategoryName":
-                tvAncestry3.Text = Ancestry(treeView3.SelectedNode);
-                break;
-        }
     }
 
     private void AddNewRecord()
