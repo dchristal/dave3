@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using dave3.Model;
 
@@ -11,9 +12,11 @@ using dave3.Model;
 namespace dave3.Migrations
 {
     [DbContext(typeof(DelightfulContext))]
-    partial class DelightfulContextModelSnapshot : ModelSnapshot
+    [Migration("20230705225403_FixLocatioId")]
+    partial class FixLocatioId
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

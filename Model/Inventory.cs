@@ -18,7 +18,7 @@ public class Inventory
     public int ProductId { get; set; }
 
 
-    public int Location { get; set; }
+    public int LocationId { get; set; }
 
     public int CategoryId { get; set; }
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -26,5 +27,48 @@ namespace dave3
         [DllImport("user32.dll")]
         private static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wp, IntPtr lp);
     }
+    public class CustomTextBox : TextBox
+    {
+        public override string Text
+        {
+            get
+            {
+                return base.Text;
+            }
+            set
+            {
+                // Place a breakpoint here to break when the Text property changes
+                base.Text = value;
+            }
+        }
+    }
+    
+           
+    
+    public class FilterClass : INotifyPropertyChanged
+    {
+        private bool _filterStat;
+
+        public bool FilterStat
+        {
+            get { return _filterStat; }
+            set
+            {
+                if (_filterStat != value)
+                {
+                    _filterStat = value;
+                    OnPropertyChanged("FilterStat");
+                }
+            }
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected virtual void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+    }
+
 
 }

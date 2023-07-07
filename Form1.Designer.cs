@@ -32,7 +32,7 @@ partial class Form1
         treeView2 = new MyTreeView();
         treeView3 = new MyTreeView();
         tv3Tag = new TextBox();
-        tv2Tag = new TextBox();
+        tv2Tag = new CustomTextBox();
         tv1Tag = new TextBox();
         tvName1 = new TextBox();
         tvName2 = new TextBox();
@@ -51,12 +51,16 @@ partial class Form1
         tvIncludeChildren2 = new CheckBox();
         tvIncludeChildren3 = new CheckBox();
         SearchInventory = new TextBox();
+        tvName2a = new TextBox();
+        tv2aTag = new CustomTextBox();
+        FilterStatus = new Button();
         ((System.ComponentModel.ISupportInitialize)inventoryDataGridView).BeginInit();
         ((System.ComponentModel.ISupportInitialize)bindingSource1).BeginInit();
         SuspendLayout();
         // 
         // treeView1
         // 
+        treeView1.HideSelection = false;
         treeView1.Location = new Point(15, 57);
         treeView1.Name = "treeView1";
         treeView1.Size = new Size(303, 182);
@@ -73,7 +77,7 @@ partial class Form1
         // inventoryDataGridView
         // 
         inventoryDataGridView.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-        inventoryDataGridView.Location = new Point(12, 327);
+        inventoryDataGridView.Location = new Point(17, 377);
         inventoryDataGridView.Name = "inventoryDataGridView";
         inventoryDataGridView.RowTemplate.Height = 25;
         inventoryDataGridView.Size = new Size(1139, 342);
@@ -84,6 +88,7 @@ partial class Form1
         // 
         // treeView2
         // 
+        treeView2.HideSelection = false;
         treeView2.Location = new Point(324, 58);
         treeView2.Name = "treeView2";
         treeView2.Size = new Size(303, 182);
@@ -91,6 +96,7 @@ partial class Form1
         // 
         // treeView3
         // 
+        treeView3.HideSelection = false;
         treeView3.Location = new Point(633, 57);
         treeView3.Name = "treeView3";
         treeView3.Size = new Size(303, 182);
@@ -98,61 +104,55 @@ partial class Form1
         // 
         // tv3Tag
         // 
-        tv3Tag.Location = new Point(630, 214);
+        tv3Tag.Location = new Point(635, 264);
         tv3Tag.Name = "tv3Tag";
         tv3Tag.Size = new Size(100, 23);
         tv3Tag.TabIndex = 22;
         tv3Tag.TabStop = false;
-        tv3Tag.Visible = false;
         // 
         // tv2Tag
         // 
-        tv2Tag.Location = new Point(321, 214);
+        tv2Tag.Location = new Point(326, 264);
         tv2Tag.Name = "tv2Tag";
         tv2Tag.Size = new Size(100, 23);
         tv2Tag.TabIndex = 21;
         tv2Tag.TabStop = false;
-        tv2Tag.Visible = false;
         // 
         // tv1Tag
         // 
-        tv1Tag.Location = new Point(12, 214);
+        tv1Tag.Location = new Point(17, 264);
         tv1Tag.Name = "tv1Tag";
         tv1Tag.Size = new Size(100, 23);
         tv1Tag.TabIndex = 20;
         tv1Tag.TabStop = false;
-        tv1Tag.Visible = false;
         // 
         // tvName1
         // 
-        tvName1.Location = new Point(117, 215);
+        tvName1.Location = new Point(122, 265);
         tvName1.Name = "tvName1";
         tvName1.Size = new Size(198, 23);
         tvName1.TabIndex = 23;
         tvName1.TabStop = false;
-        tvName1.Visible = false;
         // 
         // tvName2
         // 
-        tvName2.Location = new Point(426, 214);
+        tvName2.Location = new Point(431, 264);
         tvName2.Name = "tvName2";
         tvName2.Size = new Size(198, 23);
         tvName2.TabIndex = 24;
         tvName2.TabStop = false;
-        tvName2.Visible = false;
         // 
         // tvName3
         // 
-        tvName3.Location = new Point(736, 214);
+        tvName3.Location = new Point(741, 264);
         tvName3.Name = "tvName3";
         tvName3.Size = new Size(198, 23);
         tvName3.TabIndex = 25;
         tvName3.TabStop = false;
-        tvName3.Visible = false;
         // 
         // tvAncestry1
         // 
-        tvAncestry1.Location = new Point(15, 244);
+        tvAncestry1.Location = new Point(20, 294);
         tvAncestry1.Name = "tvAncestry1";
         tvAncestry1.Size = new Size(917, 23);
         tvAncestry1.TabIndex = 26;
@@ -160,7 +160,7 @@ partial class Form1
         // 
         // tvAncestry2
         // 
-        tvAncestry2.Location = new Point(117, 273);
+        tvAncestry2.Location = new Point(122, 323);
         tvAncestry2.Name = "tvAncestry2";
         tvAncestry2.Size = new Size(917, 23);
         tvAncestry2.TabIndex = 27;
@@ -168,7 +168,7 @@ partial class Form1
         // 
         // tvAncestry3
         // 
-        tvAncestry3.Location = new Point(235, 302);
+        tvAncestry3.Location = new Point(240, 352);
         tvAncestry3.Name = "tvAncestry3";
         tvAncestry3.Size = new Size(917, 23);
         tvAncestry3.TabIndex = 28;
@@ -198,7 +198,7 @@ partial class Form1
         // 
         // searchTreeView2
         // 
-        searchTreeView2.Location = new Point(324, 12);
+        searchTreeView2.Location = new Point(324, 8);
         searchTreeView2.Name = "searchTreeView2";
         searchTreeView2.Size = new Size(207, 23);
         searchTreeView2.TabIndex = 30;
@@ -217,7 +217,7 @@ partial class Form1
         // 
         // searchTreeView3
         // 
-        searchTreeView3.Location = new Point(637, 14);
+        searchTreeView3.Location = new Point(637, 10);
         searchTreeView3.Name = "searchTreeView3";
         searchTreeView3.Size = new Size(207, 23);
         searchTreeView3.TabIndex = 32;
@@ -236,7 +236,7 @@ partial class Form1
         // tvIncludeChildren1
         // 
         tvIncludeChildren1.AutoSize = true;
-        tvIncludeChildren1.Location = new Point(235, 33);
+        tvIncludeChildren1.Location = new Point(235, 35);
         tvIncludeChildren1.Name = "tvIncludeChildren1";
         tvIncludeChildren1.Size = new Size(93, 19);
         tvIncludeChildren1.TabIndex = 35;
@@ -268,18 +268,47 @@ partial class Form1
         // 
         // SearchInventory
         // 
-        SearchInventory.Location = new Point(947, 12);
+        SearchInventory.Location = new Point(949, 8);
         SearchInventory.Name = "SearchInventory";
         SearchInventory.Size = new Size(207, 23);
         SearchInventory.TabIndex = 38;
         SearchInventory.TabStop = false;
         SearchInventory.Leave += SearchInventory_Leave;
         // 
+        // tvName2a
+        // 
+        tvName2a.Location = new Point(431, 235);
+        tvName2a.Name = "tvName2a";
+        tvName2a.Size = new Size(198, 23);
+        tvName2a.TabIndex = 41;
+        tvName2a.TabStop = false;
+        // 
+        // tv2aTag
+        // 
+        tv2aTag.Location = new Point(326, 235);
+        tv2aTag.Name = "tv2aTag";
+        tv2aTag.Size = new Size(100, 23);
+        tv2aTag.TabIndex = 40;
+        tv2aTag.TabStop = false;
+        // 
+        // FilterStatus
+        // 
+        FilterStatus.Location = new Point(979, 112);
+        FilterStatus.Name = "FilterStatus";
+        FilterStatus.Size = new Size(75, 23);
+        FilterStatus.TabIndex = 42;
+        FilterStatus.Text = "button1";
+        FilterStatus.UseVisualStyleBackColor = true;
+        FilterStatus.Click += FilterStatus_Click;
+        // 
         // Form1
         // 
         AutoScaleDimensions = new SizeF(7F, 15F);
         AutoScaleMode = AutoScaleMode.Font;
         ClientSize = new Size(1166, 659);
+        Controls.Add(FilterStatus);
+        Controls.Add(tvName2a);
+        Controls.Add(tv2aTag);
         Controls.Add(SearchInventory);
         Controls.Add(tvIncludeChildren3);
         Controls.Add(tvIncludeChildren2);
@@ -320,7 +349,7 @@ partial class Form1
     private MyTreeView treeView2;
     private MyTreeView treeView3;
     private TextBox tv3Tag;
-    private TextBox tv2Tag;
+    private CustomTextBox tv2Tag;
     private TextBox tv1Tag;
     private TextBox tvName1;
     private TextBox tvName2;
@@ -339,4 +368,8 @@ partial class Form1
     private CheckBox tvIncludeChildren2;
     private CheckBox tvIncludeChildren3;
     private TextBox SearchInventory;
+    private Button FilterSelectMode;
+    private TextBox tvName2a;
+    private CustomTextBox tv2aTag;
+    private Button FilterStatus;
 }

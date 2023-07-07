@@ -1,5 +1,7 @@
 ﻿using System.Configuration;
+using EntityFramework.Exceptions.SqlServer;
 using Microsoft.EntityFrameworkCore;
+
 
 namespace dave3.Model;
 
@@ -42,13 +44,17 @@ public partial class DelightfulContext : DbContext
     public virtual DbSet<ControlObject> ControlObjects { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        => optionsBuilder.UseSqlServer(_connectionString);
+        => 
+            optionsBuilder
+                .UseSqlServer(_connectionString)
+                .UseExceptionProcessor()
+            ;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Inventory>(entity =>
         {
-            entity.HasIndex(e => new { e.ProductId, e.Location, e.CategoryId, e.Description },
+            entity.HasIndex(e => new { e.ProductId, Location = e.LocationId, e.CategoryId, e.Description },
                 "IX_Inventories_ProductId_Location_Category_Desc").IsUnique();
         });
         modelBuilder.Entity<ControlObject>(entity =>
