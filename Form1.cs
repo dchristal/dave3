@@ -449,7 +449,7 @@ public partial class Form1 : Form
                 inventoryDataGridView[locationColumnIndex, currentCell.RowIndex].Value = tvTag;
                 return;
             }
-
+        }
         //  if (!_filtering)
         
             var row = inventoryDataGridView.Rows[e.RowIndex];
@@ -463,7 +463,7 @@ public partial class Form1 : Form
             tvAncestry3.Text = Ancestry(tn);
             SelectNode(treeView3, tvAncestry3.Text);
             _filtering = false;
-        }
+        
 
     }
 
