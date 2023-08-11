@@ -9,3 +9,7 @@ Scaffold-DbContext "Data Source=(local);Integrated Security=SSPI;Initial Catalog
 
 Add-Migration AddCategoryID
 Update-Database
+
+2do
+ensure that treeview checkboxes work after global text search
+unset treeview checkboxes when running global text search

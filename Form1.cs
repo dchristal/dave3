@@ -22,7 +22,7 @@ public partial class Form1 : Form
     private readonly Dictionary<TreeNode, TreeNodeEntity> _treeNodeEntityMapping = new();
     private bool _enableEdit = true;
     private bool _filtering;
-
+    private BindingListView<Inventory> _inventoryBindingListView;
     private bool _isDirty;
 
     //   private Control _lastFocusedControl;
@@ -192,7 +192,7 @@ public partial class Form1 : Form
     private void TreeView_BeforeLabelEdit(object sender, NodeLabelEditEventArgs e)
     {
         // Cancel the label edit action, without canceling the editing of other nodes.
-        e.CancelEdit = !_enableEdit;
+       // e.CancelEdit = true; //!_enableEdit;
     }
 
     private void InventoryDataGridView_DefaultValuesNeeded(object sender, DataGridViewRowEventArgs e)
@@ -355,8 +355,8 @@ public partial class Form1 : Form
 
         // Set the DataSource of the BindingSource to the local entities
         var inv = _cnx.Inventories.ToList();
-        var view = new BindingListView<Inventory>(inv);
-        bindingSource1.DataSource = view;
+        _inventoryBindingListView  = new BindingListView<Inventory>(inv);
+        bindingSource1.DataSource = _inventoryBindingListView;
 
         // Set the DataSource of the DataGridView to the BindingSource
         inventoryDataGridView.DataSource = bindingSource1;
@@ -1189,7 +1189,9 @@ public partial class Form1 : Form
 
     private void TvFilter_CheckedChanged(object sender, EventArgs e)
     {
+      
         var focusedControl = ActiveControl;
+        SearchInventory.Clear();
         var treeId = focusedControl!.Name[^1];
         var textbox = Controls["searchTreeView" + treeId] as TextBox;
         var checkbox = Controls["tvFilter" + treeId] as CheckBox;
@@ -1240,22 +1242,33 @@ public partial class Form1 : Form
 
     private void FilterInventoryByText()
     {
+        tvIncludeChildren1.Checked = false;
+        tvIncludeChildren2.Checked = false;
+        tvIncludeChildren3.Checked = false;
+        tvFilter1.Checked = false;
+        tvFilter2.Checked = false;
+        tvFilter3.Checked = false;
+
+
         var searchedDescriptionsNotes = ApplyFilter(SearchInventory.Text);
-        var bindingListView = new BindingListView<Inventory>(_cnx.Inventories.Local.ToList());
+      //  var bindingListView = new BindingListView<Inventory>(_cnx.Inventories.Local.ToList());
 
         if (!searchedDescriptionsNotes.Any())
         {
-            bindingListView.RemoveFilter();
+            _inventoryBindingListView.RemoveFilter();
             UpdateButtonState(true);
         }
         else
         {
-            bindingListView.ApplyFilter(i => searchedDescriptionsNotes.Contains(i.InventoryId))
+            _inventoryBindingListView.ApplyFilter(i => searchedDescriptionsNotes.Contains(i.InventoryId))
                 ;
             UpdateButtonState(false);
         }
 
-        inventoryDataGridView.DataSource = bindingListView;
+        //bindingSource1.DataSource = _inventoryBindingListView;
+        //inventoryDataGridView.DataSource = bindingSource1;
+        inventoryDataGridView.Refresh();
+
     }
 
 
@@ -1264,22 +1277,22 @@ public partial class Form1 : Form
         var selectedProductIds = ApplyFilter(treeView1, tvFilter1, tvIncludeChildren1, i => i.ProductId);
         var selectedLocations = ApplyFilter(treeView2, tvFilter2, tvIncludeChildren2, i => i.LocationId);
         var selectedCategoryIds = ApplyFilter(treeView3, tvFilter3, tvIncludeChildren3, i => i.CategoryId);
-        var bindingListView = new BindingListView<Inventory>(_cnx.Inventories.Local.ToList());
+       // var bindingListView = new BindingListView<Inventory>(_cnx.Inventories.Local.ToList());
 
         if (!selectedProductIds.Any() && !selectedLocations.Any() && !selectedCategoryIds.Any())
         {
-            bindingListView.RemoveFilter();
+            _inventoryBindingListView.RemoveFilter();
             UpdateButtonState(true);
         }
         else
         {
-            bindingListView.ApplyFilter(i => selectedProductIds.Contains(i.ProductId)
-                                             || selectedLocations.Contains(i.LocationId)
-                                             || selectedCategoryIds.Contains(i.CategoryId));
+            _inventoryBindingListView.ApplyFilter(i => selectedProductIds.Contains(i.ProductId)
+                                                       || selectedLocations.Contains(i.LocationId)
+                                                       || selectedCategoryIds.Contains(i.CategoryId));
             UpdateButtonState(false);
         }
 
-        bindingSource1.DataSource = bindingListView;
+        //bindingSource1.DataSource = _inventoryBindingListView;
 
         inventoryDataGridView.Refresh();
     }
