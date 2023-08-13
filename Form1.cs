@@ -178,6 +178,7 @@ public partial class Form1 : Form
 
         if (sb.Text.Length > 0)
         {
+            // No need to check here if the checkbox is already checked
             //tvFilter.Checked = true;
             FindAndSelectNode(sb.Text);
         }
