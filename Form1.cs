@@ -123,6 +123,11 @@ public partial class Form1 : Form
             searchTreeView.Text = "";
             UpdateTreeViewFilteringState();
         }
+        else
+        {
+            FilterInventoryByTreeView();
+
+        }
         // Execute the code you want here.
     }
     /*
@@ -600,6 +605,7 @@ public partial class Form1 : Form
 
     private void TreeView_AfterSelect(object sender, TreeViewEventArgs e)
     {
+        //if checkbox true and filter true
         // Wrapping the code in a try-catch block to handle any runtime exceptions
         try
         {
