@@ -178,7 +178,7 @@ public partial class Form1 : Form
 
         if (sb.Text.Length > 0)
         {
-            tvFilter.Checked = true;
+            //tvFilter.Checked = true;
             FindAndSelectNode(sb.Text);
         }
         else
