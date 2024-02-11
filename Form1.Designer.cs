@@ -293,7 +293,7 @@ partial class Form1
         // 
         // FilterStatus
         // 
-        FilterStatus.Location = new Point(979, 112);
+        FilterStatus.Location = new Point(976, 129);
         FilterStatus.Name = "FilterStatus";
         FilterStatus.Size = new Size(75, 23);
         FilterStatus.TabIndex = 42;
@@ -305,7 +305,7 @@ partial class Form1
         // 
         AutoScaleDimensions = new SizeF(7F, 15F);
         AutoScaleMode = AutoScaleMode.Font;
-        ClientSize = new Size(1166, 659);
+        ClientSize = new Size(1178, 800);
         Controls.Add(FilterStatus);
         Controls.Add(tvName2a);
         Controls.Add(tv2aTag);

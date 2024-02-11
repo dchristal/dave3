@@ -8,5 +8,5 @@ public partial class Attribute
 
     public float AttributeValue { get; set; }
 
-    
+
 }

@@ -1,9 +1,9 @@
-using System.Linq.Expressions;
-using System.Text.RegularExpressions;
 using dave3.Model;
 using Equin.ApplicationFramework;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
+using System.Text.RegularExpressions;
 
 namespace dave3;
 
@@ -437,65 +437,78 @@ public partial class Form1 : Form
         var tvTag = tv2Tag.Text;
         var tvName = tvName2.Text;
         var currentCell = inventoryDataGridView.CurrentCell;
-        
-        if(currentCell.RowIndex > 0){
-        if (currentCell != null  ) // Check if it's not the first row
-            if (currentCell.OwningColumn.Name == "LocationName")
-            {
-                // Update the current cell and the Location cell based on the selected node in treeView2
-                currentCell.Value = tvName;
 
-                var locationColumnIndex = inventoryDataGridView.Columns["LocationId"].Index;
-                inventoryDataGridView[locationColumnIndex, currentCell.RowIndex].Value = tvTag;
-                return;
-            }
+        if (currentCell.RowIndex > 0)
+        {
+            if (currentCell != null) // Check if it's not the first row
+                if (currentCell.OwningColumn.Name == "LocationName")
+                {
+                    // Update the current cell and the Location cell based on the selected node in treeView2
+                    currentCell.Value = tvName;
+
+                    var locationColumnIndex = inventoryDataGridView.Columns["LocationId"].Index;
+                    inventoryDataGridView[locationColumnIndex, currentCell.RowIndex].Value = tvTag;
+                    return;
+                }
         }
         //  if (!_filtering)
-        
-            var row = inventoryDataGridView.Rows[e.RowIndex];
-            var tn = _cnx.TreeNodeEntities.Find(row.Cells["ProductId"].Value);
-            tvAncestry1.Text = Ancestry(tn);
-            SelectNode(treeView1, tvAncestry1.Text);
-            tn = _cnx.TreeNodeEntities.Find(row.Cells["LocationId"].Value);
-            tvAncestry2.Text = Ancestry(tn);
-            SelectNode(treeView2, tvAncestry2.Text);
-            tn = _cnx.TreeNodeEntities.Find(row.Cells["CategoryId"].Value);
-            tvAncestry3.Text = Ancestry(tn);
-            SelectNode(treeView3, tvAncestry3.Text);
-            _filtering = false;
-        
+
+        var row = inventoryDataGridView.Rows[e.RowIndex];
+        var tn = _cnx.TreeNodeEntities.Find(row.Cells["ProductId"].Value);
+        tvAncestry1.Text = Ancestry(tn);
+        SelectNode(treeView1, tvAncestry1.Text);
+        tn = _cnx.TreeNodeEntities.Find(row.Cells["LocationId"].Value);
+        tvAncestry2.Text = Ancestry(tn);
+        SelectNode(treeView2, tvAncestry2.Text);
+        tn = _cnx.TreeNodeEntities.Find(row.Cells["CategoryId"].Value);
+        tvAncestry3.Text = Ancestry(tn);
+        SelectNode(treeView3, tvAncestry3.Text);
+        _filtering = false;
+
 
     }
 
     private void InventoryDataGridView_RowValidated(object sender, DataGridViewCellEventArgs e)
     {
         var dataGridView = (DataGridView)sender;
+        if (e.RowIndex >= dataGridView.Rows.Count)
+    {
+        return;
+    }
         var row = dataGridView.Rows[e.RowIndex];
+        //var inventoryN = (Inventory)row.DataBoundItem;
+        // Check if the Inventory object is being tracked by the DbContext
+        //var isTracked = _cnx.ChangeTracker.Entries<Inventory>().Any(entry => entry.Entity == inventoryN);
 
         // Check if it's a new row
         if (row.IsNewRow)
         {
             // Set the LastUpdate to the current time
             row.Cells["LastUpdate"].Value = DateTime.Now;
-
-            // The row is a new row that the user has just finished entering data for.
-            // A new Inventory object has been created and added to the binding source.
-            // You can retrieve this object using the DataBoundItem property of the row.
-
-            var objectView = (ObjectView<Inventory>)row.DataBoundItem;
-            if (objectView != null)
-            {
-                var inventory = objectView.Object;
-
-                // Now you can add the new Inventory object to the DbContext.
-
-                _cnx.Inventories.Add(inventory);
-            }
-        
         }
+        // The row is a new row that the user has just finished entering data for.
+        // A new Inventory object has been created and added to the binding source.
+        // You can retrieve this object using the DataBoundItem property of the row.
+        if(row.DataBoundItem != null)
+{
+    var objectView = (ObjectView<Inventory>)row.DataBoundItem;
+ 
+        if (objectView != null && objectView.Object.InventoryId == 0)
+
+        {
+            var inventory = objectView.Object;
+
+            // Now you can add the new Inventory object to the DbContext.
+
+            _cnx.Inventories.Add(inventory);
+        }
+ }
+
+
 
         _cnx.SaveChanges();
     }
+
 
 
     private void InventoryDataGridView_RowLeave(object sender, DataGridViewCellEventArgs e)
@@ -538,7 +551,7 @@ public partial class Form1 : Form
     }
 
     private async void InventoryDataGridView_Leave(object sender, EventArgs e)
-        //private void InventoryDataGridView_Leave(object o, EventArgs e)
+    //private void InventoryDataGridView_Leave(object o, EventArgs e)
     {
         bindingSource1.EndEdit();
         //if (inventoryDataGridView.CurrentRow != null) _previousRowIndex = inventoryDataGridView.CurrentRow.Index;
@@ -1288,15 +1301,15 @@ public partial class Form1 : Form
     private HashSet<int> ApplyFilter(string searchString)
     {
         var filteredInventories = from i in _cnx.Inventories
-            join p in _cnx.TreeNodeEntities on i.ProductId equals p.Id
-            join l in _cnx.TreeNodeEntities on i.LocationId equals l.Id
-            join c in _cnx.TreeNodeEntities on i.CategoryId equals c.Id
-            where (i.Description != null && i.Description.Contains(searchString))
-                  || (i.Notes != null && i.Notes.Contains(searchString))
-                  || (p.Name != null && p.Name.Contains(searchString))
-                  || (l.Name != null && l.Name.Contains(searchString))
-                  || (c.Name != null && c.Name.Contains(searchString))
-            select i;
+                                  join p in _cnx.TreeNodeEntities on i.ProductId equals p.Id
+                                  join l in _cnx.TreeNodeEntities on i.LocationId equals l.Id
+                                  join c in _cnx.TreeNodeEntities on i.CategoryId equals c.Id
+                                  where (i.Description != null && i.Description.Contains(searchString))
+                                        || (i.Notes != null && i.Notes.Contains(searchString))
+                                        || (p.Name != null && p.Name.Contains(searchString))
+                                        || (l.Name != null && l.Name.Contains(searchString))
+                                        || (c.Name != null && c.Name.Contains(searchString))
+                                  select i;
 
         var ids = new HashSet<int>();
 
@@ -1359,7 +1372,7 @@ public partial class Form1 : Form
 
     private void SearchInventory_Leave(object sender, EventArgs e)
     {
-     FilterInventoryByText();
+        FilterInventoryByText();
     }
 
     public class TreeNodeTagData

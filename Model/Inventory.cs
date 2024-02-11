@@ -6,7 +6,7 @@ namespace dave3.Model;
 public class Inventory
 {
     public Inventory() { } // Parameterless constructor
-    
+
     public Inventory(string productName, string locationName, string categoryName)
     {
         ProductName = productName;

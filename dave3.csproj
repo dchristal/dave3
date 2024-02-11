@@ -32,7 +32,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Migrationsb4\" />
+    <Folder Include="Migrations\" />
   </ItemGroup>
 
   <ItemGroup>

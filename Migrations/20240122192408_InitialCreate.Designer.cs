@@ -12,8 +12,8 @@ using dave3.Model;
 namespace dave3.Migrations
 {
     [DbContext(typeof(DelightfulContext))]
-    [Migration("20230610233851_AddControls3")]
-    partial class AddControls3
+    [Migration("20240122192408_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -47,33 +47,23 @@ namespace dave3.Migrations
                     b.ToTable("Attributes");
                 });
 
-            modelBuilder.Entity("dave3.Model.Control", b =>
+            modelBuilder.Entity("dave3.Model.ControlObject", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<float>("MyFloat")
-                        .HasColumnType("real");
-
-                    b.Property<int>("MyInt")
-                        .HasColumnType("int");
-
-                    b.Property<string>("MyString")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Name")
                         .HasColumnType("nvarchar(450)");
 
-                    b.HasKey("Id");
+                    b.Property<float?>("ControlFloat")
+                        .HasColumnType("real");
 
-                    b.HasIndex(new[] { "Name" }, "IX_Controls_ControlName")
-                        .IsUnique()
-                        .HasFilter("[Name] IS NOT NULL");
+                    b.Property<int?>("ControlInt")
+                        .HasColumnType("int");
 
-                    b.ToTable("Controls");
+                    b.Property<string>("ControlString")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Name");
+
+                    b.ToTable("ControlObjects");
                 });
 
             modelBuilder.Entity("dave3.Model.Inventory", b =>
@@ -93,6 +83,9 @@ namespace dave3.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<float?>("Diameter")
+                        .HasColumnType("real");
+
                     b.Property<float?>("Height")
                         .HasColumnType("real");
 
@@ -102,7 +95,7 @@ namespace dave3.Migrations
                     b.Property<float?>("Length")
                         .HasColumnType("real");
 
-                    b.Property<int>("Location")
+                    b.Property<int>("LocationId")
                         .HasColumnType("int");
 
                     b.Property<string>("Material")
@@ -137,7 +130,7 @@ namespace dave3.Migrations
 
                     b.HasKey("InventoryId");
 
-                    b.HasIndex(new[] { "ProductId", "Location", "CategoryId", "Description" }, "IX_Inventories_ProductId_Location_Category_Desc")
+                    b.HasIndex(new[] { "ProductId", "LocationId", "CategoryId", "Description" }, "IX_Inventories_ProductId_Location_Category_Desc")
                         .IsUnique()
                         .HasFilter("[Description] IS NOT NULL");
 

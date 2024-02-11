@@ -1,26 +1,26 @@
-﻿using System.Configuration;
-using EntityFramework.Exceptions.SqlServer;
+﻿using EntityFramework.Exceptions.SqlServer;
 using Microsoft.EntityFrameworkCore;
+using System.Configuration;
 
 
 namespace dave3.Model;
 
 public partial class DelightfulContext : DbContext
 {
- 
-        private readonly string _connectionString;
 
-        //public DelightfulContext(string connectionString)
-        //{
-        //    _connectionString = connectionString;
-        //}
+    private readonly string _connectionString;
 
-        // rest of the class implementation
-     
+    //public DelightfulContext(string connectionString)
+    //{
+    //    _connectionString = connectionString;
+    //}
 
+    // rest of the class implementation
 
 
-  
+
+
+
     public DelightfulContext()
     {
         _connectionString = ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
@@ -44,7 +44,7 @@ public partial class DelightfulContext : DbContext
     public virtual DbSet<ControlObject> ControlObjects { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        => 
+        =>
             optionsBuilder
                 .UseSqlServer(_connectionString)
                 .UseExceptionProcessor()
