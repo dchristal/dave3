@@ -1,12 +1,9 @@
-using System.ComponentModel.DataAnnotations;
 using System.Linq.Expressions;
 using System.Text.RegularExpressions;
 using dave3.Model;
 using Equin.ApplicationFramework;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
-using System.Text.RegularExpressions;
 
 namespace dave3;
 
@@ -26,67 +23,28 @@ public partial class Form1 : Form
     private bool _enableEdit = true;
     private bool _filtering;
     private BindingListView<Inventory> _inventoryBindingListView;
-    private bool _isDirty;
+    //private bool _isDirty;
 
     //   private Control _lastFocusedControl;
     private int _previousRowIndex;
 
     public TreeView LastFocusedTreeView;
-
+    private bool _isDirty;
 
     public Form1()
     {
         InitializeComponent();
-        // Subscribe to the Enter event of all controls
-        //foreach (Control control in Controls) control.Enter += Control_Enter;
-        //treeView2.AfterSelect += TreeView2_AfterSelect;
         KeyPreview = true;
         _cnx = new DelightfulContext();
         LastFocusedTreeView = treeView1;
-        Width = _cnx.ControlObjects.Find("Form1Width").ControlInt ?? 800;
-        Height = _cnx.ControlObjects.Find("Form1Height").ControlInt ?? 600;
-        var filterObject = new FilterClass { FilterStat = true };
-
-        // Set the data source of the binding source to the object
-        var bs = new BindingSource();
-        bs.DataSource = filterObject;
-
-        // Bind the Enabled property of the button to the boolean property of the object
-        FilterStatus.DataBindings.Add("Enabled", bs, "FilterStat", false, DataSourceUpdateMode.OnPropertyChanged);
-        UpdateButtonState(filterObject.FilterStat);
-
         var treeViews = new List<MyTreeView> { treeView1, treeView2, treeView3 };
-        // Create the context menu
-        var contextMenu = new ContextMenuStrip();
-        var moveUpItem = new ToolStripMenuItem("Move Up");
-        var moveDownItem = new ToolStripMenuItem("Move Down");
+        SetFormDimensions();
+        BindFilterStatus();
+        ContextMenuStrip contextMenu = SetupTreeViewContextMenu();
+        SubscribeToEvents();
 
-        contextMenu.Items.AddRange(new ToolStripItem[] { moveUpItem, moveDownItem });
 
-        //inventoryDataGridView.DefaultValuesNeeded += InventoryDataGridView_DefaultValuesNeeded;
-        LastFocusedTreeView.GotFocus += TreeView_GotFocus;
-        moveUpItem.Click += (_, _) => MoveNode(-1);
-        moveDownItem.Click += (_, _) => MoveNode(1);
-        tvFilter1.CheckedChanged += TvFilter_CheckedChanged;
-        tvFilter2.CheckedChanged += TvFilter_CheckedChanged;
-        tvFilter3.CheckedChanged += TvFilter_CheckedChanged;
-        tvIncludeChildren1.CheckedChanged += TvFilter_CheckedChanged;
-        tvIncludeChildren2.CheckedChanged += TvFilter_CheckedChanged;
-        tvIncludeChildren3.CheckedChanged += TvFilter_CheckedChanged;
-        searchTreeView1.TextChanged += SearchTreeView_TextChanged;
-        searchTreeView2.TextChanged += SearchTreeView_TextChanged;
-        searchTreeView3.TextChanged += SearchTreeView_TextChanged;
-        inventoryDataGridView.DefaultValuesNeeded += (_, args) =>
-        {
-            args.Row.Cells[0].Value = tv1Tag.Text;
-            args.Row.Cells[1].Value = tv2Tag.Text;
-            args.Row.Cells[2].Value = tv3Tag.Text;
-            args.Row.Cells["ProductName"].Value = tvName1.Text;
-            args.Row.Cells["LocationName"].Value = tvName2.Text;
-            args.Row.Cells["CategoryName"].Value = tvName3.Text;
-            args.Row.Cells["LastUpdate"].Value = DateTime.Now;
-            args.Row.Cells["Quantity"].Value = 1;
-        };
+
 
 
         foreach (var treeView in treeViews)
@@ -112,6 +70,63 @@ public partial class Form1 : Form
         }
 
         BuildInventoryDataGridView();
+
+        void SetFormDimensions()
+        {
+            Width = _cnx.ControlObjects.Find("Form1Width").ControlInt ?? 800;
+            Height = _cnx.ControlObjects.Find("Form1Height").ControlInt ?? 600;
+        }
+
+        void BindFilterStatus()
+        {
+            var filterObject = new FilterClass { FilterStat = true };
+
+            // Set the data source of the binding source to the object
+            var bs = new BindingSource();
+            bs.DataSource = filterObject;
+
+            // Bind the Enabled property of the button to the boolean property of the object
+            FilterStatus.DataBindings.Add("Enabled", bs, "FilterStat", false, DataSourceUpdateMode.OnPropertyChanged);
+            UpdateButtonState(filterObject.FilterStat);
+        }
+
+        ContextMenuStrip SetupTreeViewContextMenu()
+        {
+            var contextMenu = new ContextMenuStrip();
+            var moveUpItem = new ToolStripMenuItem("Move Up");
+            var moveDownItem = new ToolStripMenuItem("Move Down");
+            contextMenu.Items.AddRange(new ToolStripItem[] { moveUpItem, moveDownItem });
+            LastFocusedTreeView.GotFocus += TreeView_GotFocus;
+            moveUpItem.Click += (_, _) => MoveNode(-1);
+            moveDownItem.Click += (_, _) => MoveNode(1);
+            return contextMenu;
+        }
+        void SubscribeToEvents()
+        {
+            LastFocusedTreeView.GotFocus += TreeView_GotFocus;
+            tvFilter1.CheckedChanged += TvFilter_CheckedChanged;
+            tvFilter2.CheckedChanged += TvFilter_CheckedChanged;
+            tvFilter3.CheckedChanged += TvFilter_CheckedChanged;
+            tvIncludeChildren1.CheckedChanged += TvFilter_CheckedChanged;
+            tvIncludeChildren2.CheckedChanged += TvFilter_CheckedChanged;
+            tvIncludeChildren3.CheckedChanged += TvFilter_CheckedChanged;
+            searchTreeView1.TextChanged += SearchTreeView_TextChanged;
+            searchTreeView2.TextChanged += SearchTreeView_TextChanged;
+            searchTreeView3.TextChanged += SearchTreeView_TextChanged;
+            inventoryDataGridView.DefaultValuesNeeded += SetDefaultValues;
+        }
+
+        void SetDefaultValues(object sender, DataGridViewRowEventArgs e)
+        {
+            e.Row.Cells[0].Value = tv1Tag.Text;
+            e.Row.Cells[1].Value = tv2Tag.Text;
+            e.Row.Cells[2].Value = tv3Tag.Text;
+            e.Row.Cells["ProductName"].Value = tvName1.Text;
+            e.Row.Cells["LocationName"].Value = tvName2.Text;
+            e.Row.Cells["CategoryName"].Value = tvName3.Text;
+            e.Row.Cells["LastUpdate"].Value = DateTime.Now;
+            e.Row.Cells["Quantity"].Value = 1;
+        }
     }
 
     private void TreeView_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
@@ -225,14 +240,35 @@ public partial class Form1 : Form
         return null;
     }
 
+    private bool _isDeletingRow = false;
+
     private void InventoryDataGridView_UserDeletingRow(object sender, DataGridViewRowCancelEventArgs e)
     {
         return;
+        if (_isDeletingRow)
+        {
+            return;
+        }
+
+        _isDeletingRow = true;
+
         var inventoryView = (ObjectView<Inventory>)e.Row.DataBoundItem;
         var inventory = inventoryView.Object;
+
+        // Check if the inventory item still exists in the database
+        var inventoryInDb = _cnx.Inventories.Find(inventory.InventoryId);
+        if (inventoryInDb == null)
+        {
+            MessageBox.Show("This item has already been deleted from the database.");
+            // Refresh the DataGridView here to ensure it displays the current state of the database
+            _isDeletingRow = false;
+            return;
+        }
+
         _cnx.Inventories.Remove(inventory);
         _cnx.SaveChanges();
-        inventoryDataGridView.Refresh();
+
+        _isDeletingRow = false;
     }
 
 
