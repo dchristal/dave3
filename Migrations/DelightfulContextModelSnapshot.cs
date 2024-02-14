@@ -17,7 +17,7 @@ namespace dave3.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "7.0.5")
+                .HasAnnotation("ProductVersion", "8.0.2")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -65,11 +65,11 @@ namespace dave3.Migrations
 
             modelBuilder.Entity("dave3.Model.Inventory", b =>
                 {
-                    b.Property<int>("InventoryId")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("InventoryId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<float?>("Amps")
                         .HasColumnType("real");
@@ -85,6 +85,9 @@ namespace dave3.Migrations
 
                     b.Property<float?>("Height")
                         .HasColumnType("real");
+
+                    b.Property<int>("InventoryId")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("LastUpdate")
                         .HasColumnType("datetime2");
@@ -125,7 +128,7 @@ namespace dave3.Migrations
                     b.Property<float?>("Width")
                         .HasColumnType("real");
 
-                    b.HasKey("InventoryId");
+                    b.HasKey("Id");
 
                     b.HasIndex(new[] { "ProductId", "LocationId", "CategoryId", "Description" }, "IX_Inventories_ProductId_Location_Category_Desc")
                         .IsUnique()

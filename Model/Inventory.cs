@@ -1,11 +1,16 @@
 ﻿#nullable enable
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace dave3.Model;
 
 public class Inventory
 {
-    public Inventory() { } // Parameterless constructor
+    // [Key]
+    //[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    //public int Id { get; set; }
+
+public Inventory() { } // Parameterless constructor
 
     public Inventory(string productName, string locationName, string categoryName)
     {

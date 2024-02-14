@@ -368,7 +368,6 @@ partial class Form1
     private CheckBox tvIncludeChildren2;
     private CheckBox tvIncludeChildren3;
     private TextBox SearchInventory;
-    private Button FilterSelectMode;
     private TextBox tvName2a;
     private CustomTextBox tv2aTag;
     private Button FilterStatus;
