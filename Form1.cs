@@ -1,9 +1,9 @@
-using System.Linq.Expressions;
-using System.Text.RegularExpressions;
 using dave3.Model;
 using Equin.ApplicationFramework;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
+using System.Text.RegularExpressions;
 
 namespace dave3;
 
@@ -160,9 +160,10 @@ public partial class Form1 : Form
 
     private void UpdateButtonState(bool isEnabled)
     {
-        if (isEnabled){
+        if (isEnabled)
+        {
             FilterStatus.Text = "Filter";
-        FilterStatus.Tag = false;
+            FilterStatus.Tag = false;
         }
         // FilterStatus.BackColor = Color.Aquamarine;
         else
@@ -180,7 +181,7 @@ public partial class Form1 : Form
         var newState = !currentState;
 
         // Update the Tag property based on the Text property
-        FilterStatus.Tag = (FilterStatus.Text == "update") ? false : newState;
+        FilterStatus.Tag = (FilterStatus.Text != "update") && newState;
 
         // Update the button
         UpdateButtonState(newState);
@@ -249,32 +250,7 @@ public partial class Form1 : Form
         return null;
     }
 
-    private void InventoryDataGridView_UserDeletingRow(object sender, DataGridViewRowCancelEventArgs e)
-    {
-        return;
-        if (IsDeletingRow) return;
-
-        IsDeletingRow = true;
-
-        var inventoryView = (ObjectView<Inventory>)e.Row.DataBoundItem;
-        var inventory = inventoryView.Object;
-
-        // Check if the inventory item still exists in the database
-        var inventoryInDb = Cnx.Inventories.Find(inventory.InventoryId);
-        if (inventoryInDb == null)
-        {
-            MessageBox.Show("This item has already been deleted from the database.");
-            // Refresh the DataGridView here to ensure it displays the current state of the database
-            IsDeletingRow = false;
-            return;
-        }
-
-        Cnx.Inventories.Remove(inventory);
-        Cnx.SaveChanges();
-
-        IsDeletingRow = false;
-    }
-
+  
 
     private void InventoryDataGridView_CellBeginEdit(object sender, DataGridViewCellCancelEventArgs e)
     {
@@ -382,7 +358,6 @@ public partial class Form1 : Form
         inventoryDataGridView.Leave += InventoryDataGridView_Leave;
         inventoryDataGridView.RowLeave += InventoryDataGridView_RowLeave;
         inventoryDataGridView.RowValidated += InventoryDataGridView_RowValidated;
-        inventoryDataGridView.UserDeletingRow += InventoryDataGridView_UserDeletingRow;
         inventoryDataGridView.CellBeginEdit += InventoryDataGridView_CellBeginEdit;
         inventoryDataGridView.KeyDown += InventoryDataGridView_KeyDown;
         inventoryDataGridView.CellEnter += InventoryDataGridView_CellEnter;
@@ -626,7 +601,7 @@ public partial class Form1 : Form
     }
 
     private void InventoryDataGridView_Leave(object sender, EventArgs e)
-        //private void InventoryDataGridView_Leave(object o, EventArgs e)
+    //private void InventoryDataGridView_Leave(object o, EventArgs e)
     {
         bindingSource1.EndEdit();
         //if (inventoryDataGridView.CurrentRow != null) _previousRowIndex = inventoryDataGridView.CurrentRow.Index;
@@ -1302,7 +1277,7 @@ public partial class Form1 : Form
 
 
     private static HashSet<int> ApplyFilter(TreeView treeView, CheckBox filterCheckBox,
-        CheckBox includeChildrenCheckBox, Func<Inventory, int> propertySelector)
+        CheckBox includeChildrenCheckBox)
     {
         var ids = new HashSet<int>();
 
@@ -1358,9 +1333,9 @@ public partial class Form1 : Form
 
     private void FilterInventoryByTreeView()
     {
-        var selectedProductIds = ApplyFilter(treeView1, tvFilter1, tvIncludeChildren1, i => i.ProductId);
-        var selectedLocations = ApplyFilter(treeView2, tvFilter2, tvIncludeChildren2, i => i.LocationId);
-        var selectedCategoryIds = ApplyFilter(treeView3, tvFilter3, tvIncludeChildren3, i => i.CategoryId);
+        var selectedProductIds = ApplyFilter(treeView1, tvFilter1, tvIncludeChildren1);
+        var selectedLocations = ApplyFilter(treeView2, tvFilter2, tvIncludeChildren2);
+        var selectedCategoryIds = ApplyFilter(treeView3, tvFilter3, tvIncludeChildren3);
         // var bindingListView = new BindingListView<Inventory>(_cnx.Inventories.Local.ToList());
 
         if (selectedProductIds.Count == 0 && selectedLocations.Count == 0 && selectedCategoryIds.Count == 0)
@@ -1385,15 +1360,15 @@ public partial class Form1 : Form
     private HashSet<int> ApplyFilter(string searchString)
     {
         var filteredInventories = from i in Cnx.Inventories
-            join p in Cnx.TreeNodeEntities on i.ProductId equals p.Id
-            join l in Cnx.TreeNodeEntities on i.LocationId equals l.Id
-            join c in Cnx.TreeNodeEntities on i.CategoryId equals c.Id
-            where (i.Description != null && i.Description.Contains(searchString))
-                  || (i.Notes != null && i.Notes.Contains(searchString))
-                  || (p.Name != null && p.Name.Contains(searchString))
-                  || (l.Name != null && l.Name.Contains(searchString))
-                  || (c.Name != null && c.Name.Contains(searchString))
-            select i;
+                                  join p in Cnx.TreeNodeEntities on i.ProductId equals p.Id
+                                  join l in Cnx.TreeNodeEntities on i.LocationId equals l.Id
+                                  join c in Cnx.TreeNodeEntities on i.CategoryId equals c.Id
+                                  where (i.Description != null && i.Description.Contains(searchString))
+                                        || (i.Notes != null && i.Notes.Contains(searchString))
+                                        || (p.Name != null && p.Name.Contains(searchString))
+                                        || (l.Name != null && l.Name.Contains(searchString))
+                                        || (c.Name != null && c.Name.Contains(searchString))
+                                  select i;
 
         var ids = new HashSet<int>();
 
