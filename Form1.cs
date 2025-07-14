@@ -3,7 +3,9 @@ using dave3.Services;
 using Equin.ApplicationFramework;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using System.IO.Packaging;
 using System.Linq.Expressions;
+using System.Reflection.Emit;
 using System.Text.RegularExpressions;
 
 namespace dave3;
@@ -161,6 +163,19 @@ public partial class Form1 : Form
     /*
         private int previousRowIndex;
     */
+
+    private void ResetTreeViewFilters()
+    {
+        tvFilter1.Checked = false;
+        tvFilter2.Checked = false;
+        tvFilter3.Checked = false;
+        tvIncludeChildren1.Checked = false;
+        tvIncludeChildren2.Checked = false;
+        tvIncludeChildren3.Checked = false;
+        searchTreeView1.Clear();
+        searchTreeView2.Clear();
+        searchTreeView3.Clear();
+    }
 
     private void UpdateButtonState(bool isEnabled)
     {
@@ -375,7 +390,15 @@ public partial class Form1 : Form
                             break;
                     } // value is 1, 2, or 3
 
-                Cnx.SaveChanges();
+                try
+                {
+                    Cnx.SaveChanges();
+                }
+                catch (DbUpdateConcurrencyException ex)
+                {
+                    MessageBox.Show("Concurrency error: " + ex.Message + "\nReload and try again.");
+                    // Optionally reload data: BuildInventoryDataGridView();
+                }
             }
         }
     }
@@ -825,17 +848,17 @@ public partial class Form1 : Form
     }
 
 
-    //private bool ContainsNode(TreeNode node1, TreeNode node2)
-    //{
-    //    // Check the parent node of the second node.  
-    //    if (node2.Parent == null) return false;
-    //    if (node2.Parent.Equals(node1)) return true;
+    private bool ContainsNode(TreeNode node1, TreeNode node2)
+    {
+        // Check the parent node of the second node.  
+        if (node2.Parent == null) return false;
+        if (node2.Parent.Equals(node1)) return true;
 
-    //    // If the parent node is not null or equal to the first node,   
-    //    // call the ContainsNode method recursively using the parent of   
-    //    // the second node.  
-    //    return ContainsNode(node1, node2.Parent);
-    //}
+        // If the parent node is not null or equal to the first node,   
+        // call the ContainsNode method recursively using the parent of   
+        // the second node.  
+        return ContainsNode(node1, node2.Parent);
+    }
 
     private void TreeView_GotFocus(object sender, EventArgs e)
     {
@@ -853,30 +876,32 @@ public partial class Form1 : Form
     }
 
     private void TreeView_DragDrop(object sender, DragEventArgs e)
-    {
+        {
         if (e.Data != null && e.Data.GetData(typeof(TreeNode)) is TreeNode movingNode)
         {
             var targetPoint = LastFocusedTreeView.PointToClient(new Point(e.X, e.Y));
             var targetNode = LastFocusedTreeView.GetNodeAt(targetPoint);
+
+            if (targetNode == movingNode || ContainsNode(movingNode, targetNode))
+            {
+                MessageBox.Show("Invalid drop: Cannot create cycles or drop on self.");
+                return;
+            }
 
             // Remove the node from its current position
             movingNode.Remove();
 
             // Insert the node at the new location
             if (targetNode == null)
-                // The node is dropped on the background, add it to the root
                 LastFocusedTreeView.Nodes.Add(movingNode);
             else
-                // The node is dropped on another node, make it a child of that node
                 targetNode.Nodes.Add(movingNode);
 
-            // Get the TreeNodeEntity corresponding to the moved TreeNode
             var movingEntity = TreeNodeEntityMapping[movingNode];
 
-            // Modify the parent of the moved entity based on where the TreeNode was moved in the TreeView
             if (targetNode == null)
             {
-                movingEntity.ParentId = null; // Or whatever signifies a root node in your model
+                movingEntity.ParentId = null;
             }
             else
             {
@@ -884,7 +909,6 @@ public partial class Form1 : Form
                 movingEntity.ParentId = parentEntity.Id;
             }
 
-            // Save changes to the DbContext
             Cnx.SaveChanges();
         }
     }
@@ -1260,6 +1284,21 @@ public partial class Form1 : Form
 
     private void UpdateTreeViewFilteringState()
     {
+        if (SearchInventory.Text.Length > 0)
+        {
+            // Temporarily disable tree filters during global search
+            tvFilter1.Enabled = false;
+            tvFilter2.Enabled = false;
+            tvFilter3.Enabled = false;
+        }
+        else
+        {
+            tvFilter1.Enabled = true;
+            tvFilter2.Enabled = true;
+            tvFilter3.Enabled = true;
+            FilterInventoryByTreeView(); // Reapply if needed
+        }
+
         Filtering = true;
         bindingSource1.EndEdit();
         Cnx.SaveChanges();
@@ -1330,6 +1369,7 @@ public partial class Form1 : Form
 
     private void FilterInventoryByText()
     {
+        ResetTreeViewFilters();
         tvIncludeChildren1.Checked = false;
         tvIncludeChildren2.Checked = false;
         tvIncludeChildren3.Checked = false;
@@ -1337,9 +1377,7 @@ public partial class Form1 : Form
         tvFilter2.Checked = false;
         tvFilter3.Checked = false;
 
-
         var searchedDescriptionsNotes = ApplyFilter(SearchInventory.Text);
-        //  var bindingListView = new BindingListView<Inventory>(_cnx.Inventories.Local.ToList());
 
         if (searchedDescriptionsNotes.Count == 0)
         {
@@ -1348,13 +1386,10 @@ public partial class Form1 : Form
         }
         else
         {
-            InventoryBindingListView.ApplyFilter(i => searchedDescriptionsNotes.Contains(i.InventoryId))
-                ;
+            InventoryBindingListView.ApplyFilter(i => searchedDescriptionsNotes.Contains(i.InventoryId));
             UpdateButtonState(false);
         }
 
-        //bindingSource1.DataSource = _inventoryBindingListView;
-        //inventoryDataGridView.DataSource = bindingSource1;
         inventoryDataGridView.Refresh();
     }
 

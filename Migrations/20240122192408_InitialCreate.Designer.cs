@@ -167,6 +167,7 @@ namespace dave3.Migrations
                     b.ToTable((string)null);
 
                     b.ToView("InventoryView", (string)null);
+                    modelBuilder.Entity<InventoryView>().HasNoKey().ToView("InventoryView");
                 });
 
             modelBuilder.Entity("dave3.Model.Node", b =>
