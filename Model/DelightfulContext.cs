@@ -23,7 +23,7 @@ public partial class DelightfulContext : DbContext
 
     public DelightfulContext()
     {
-        _connectionString = ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
+        _connectionString = ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;   
     }
 
     //public DelightfulContext(DbContextOptions<DelightfulContext> options)

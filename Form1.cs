@@ -1,9 +1,10 @@
-using System.Linq.Expressions;
-using System.Text.RegularExpressions;
 using dave3.Model;
+using dave3.Services;
 using Equin.ApplicationFramework;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
+using System.Text.RegularExpressions;
 
 namespace dave3;
 
@@ -14,6 +15,7 @@ public partial class Form1 : Form
     //private bool _isDirty;
 
     //   private Control _lastFocusedControl;
+    private readonly InventoryRepository _inventoryRepo;
 
     public Form1()
     {
@@ -26,6 +28,7 @@ public partial class Form1 : Form
         BindFilterStatus();
         var contextMenu = SetupTreeViewContextMenu();
         SubscribeToEvents();
+        _inventoryRepo = new InventoryRepository(Cnx);  // Pass your DbContext
 
 
         foreach (var treeView in treeViews)
@@ -1356,30 +1359,41 @@ public partial class Form1 : Form
     }
 
 
-    private void FilterInventoryByTreeView()
+    private async void FilterInventoryByTreeView()
     {
-        var selectedProductIds = ApplyFilter(treeView1, tvFilter1, tvIncludeChildren1, i => i.ProductId);
-        var selectedLocations = ApplyFilter(treeView2, tvFilter2, tvIncludeChildren2, i => i.LocationId);
-        var selectedCategoryIds = ApplyFilter(treeView3, tvFilter3, tvIncludeChildren3, i => i.CategoryId);
-        // var bindingListView = new BindingListView<Inventory>(_cnx.Inventories.Local.ToList());
+        //var selectedProductIds = ApplyFilter(treeView1, tvFilter1, tvIncludeChildren1, i => i.ProductId);
+        //var selectedLocations = ApplyFilter(treeView2, tvFilter2, tvIncludeChildren2, i => i.LocationId);
+        //var selectedCategoryIds = ApplyFilter(treeView3, tvFilter3, tvIncludeChildren3, i => i.CategoryId);
+        //// var bindingListView = new BindingListView<Inventory>(_cnx.Inventories.Local.ToList());
 
-        if (selectedProductIds.Count == 0 && selectedLocations.Count == 0 && selectedCategoryIds.Count == 0)
-        {
-            InventoryBindingListView.RemoveFilter();
-            UpdateButtonState(true);
-        }
-        else
-        {
-            InventoryBindingListView.ApplyFilter(i => selectedProductIds.Contains(i.ProductId)
-                                                      || selectedLocations.Contains(i.LocationId)
-                                                      || selectedCategoryIds.Contains(i.CategoryId));
-            UpdateButtonState(false);
-        }
+        //if (selectedProductIds.Count == 0 && selectedLocations.Count == 0 && selectedCategoryIds.Count == 0)
+        //{
+        //    InventoryBindingListView.RemoveFilter();
+        //    UpdateButtonState(true);
+        //}
+        //else
+        //{
+        //    InventoryBindingListView.ApplyFilter(i => selectedProductIds.Contains(i.ProductId)
+        //                                              || selectedLocations.Contains(i.LocationId)
+        //                                              || selectedCategoryIds.Contains(i.CategoryId));
+        //    UpdateButtonState(false);
+        //}
 
-        //bindingSource1.DataSource = _inventoryBindingListView;
+        ////bindingSource1.DataSource = _inventoryBindingListView;
 
+        //inventoryDataGridView.Refresh();
+        int? prodId = tvFilter1.Checked ? Convert.ToInt32(tv1Tag.Text) : null;
+        int? locId = tvFilter2.Checked ? Convert.ToInt32(tv2Tag.Text) : null;
+        int? catId = tvFilter3.Checked ? Convert.ToInt32(tv3Tag.Text) : null;
+        bool inclChildren = tvIncludeChildren1.Checked || tvIncludeChildren2.Checked || tvIncludeChildren3.Checked;  // Or per-filter
+
+        var filtered = await _inventoryRepo.GetFilteredInventoryAsync(prodId, locId, catId, inclChildren);
+        InventoryBindingListView = new BindingListView<Inventory>(filtered);
+        bindingSource1.DataSource = InventoryBindingListView;
+        inventoryDataGridView.DataSource = bindingSource1;
         inventoryDataGridView.Refresh();
     }
+    
 
 
     private HashSet<int> ApplyFilter(string searchString)
