@@ -10,12 +10,13 @@ namespace dave3;
 
 public partial class Form1 : Form
 {
-    // Define the dictionary at the class level
+    // Define the treeNodeEntityMapping at the class level
 
     //private bool _isDirty;
 
     //   private Control _lastFocusedControl;
     private readonly InventoryRepository _inventoryRepo;
+    private static readonly Dictionary<TreeNode, TreeNodeEntity> treeNodeEntityMapping = new Dictionary<TreeNode, TreeNodeEntity>();
 
     public Form1()
     {
@@ -81,7 +82,7 @@ public partial class Form1 : Form
             var contextMenu = new ContextMenuStrip();
             var moveUpItem = new ToolStripMenuItem("Move Up");
             var moveDownItem = new ToolStripMenuItem("Move Down");
-            contextMenu.Items.AddRange(new ToolStripItem[] { moveUpItem, moveDownItem });
+            contextMenu.Items.AddRange([moveUpItem, moveDownItem]);
             LastFocusedTreeView.GotFocus += TreeView_GotFocus;
             moveUpItem.Click += (_, _) => MoveNode(-1);
             moveDownItem.Click += (_, _) => MoveNode(1);
@@ -118,14 +119,14 @@ public partial class Form1 : Form
 
     public DelightfulContext Cnx { get; }
 
-    public Dictionary<string, string> ColumnToIdColumnMap { get; } = new()
+    public Dictionary<string, string> ColumnToIdColumnMap { get; } = new Dictionary<string, string>
     {
         { "ProductName", "ProductId" },
         { "LocationName", "LocationId" }
         // Add more mappings if needed
     };
 
-    public Dictionary<TreeNode, TreeNodeEntity> TreeNodeEntityMapping { get; } = [];
+    public Dictionary<TreeNode, TreeNodeEntity> TreeNodeEntityMapping { get; } = treeNodeEntityMapping;
 
     public bool EnableEdit { get; set; } = true;
     public bool Filtering { get; set; }
@@ -183,7 +184,7 @@ public partial class Form1 : Form
         var newState = !currentState;
 
         // Update the Tag property based on the Text property
-        FilterStatus.Tag = (FilterStatus.Text == "update") ? false : newState;
+        FilterStatus.Tag = FilterStatus.Text != "update" && newState;
 
         // Update the button
         UpdateButtonState(newState);
@@ -254,8 +255,8 @@ public partial class Form1 : Form
 
     private void InventoryDataGridView_UserDeletingRow(object sender, DataGridViewRowCancelEventArgs e)
     {
-        return;
-        if (IsDeletingRow) return;
+        //return;
+       // if (IsDeletingRow) return;
 
         IsDeletingRow = true;
 
@@ -310,7 +311,7 @@ public partial class Form1 : Form
                 var cellAbove = inventoryDataGridView[currentCell.ColumnIndex, currentCell.RowIndex - 1];
                 currentCell.Value = cellAbove.Value;
 
-                // Check if the current column is in the dictionary
+                // Check if the current column is in the treeNodeEntityMapping
                 if (ColumnToIdColumnMap.TryGetValue(currentCell.OwningColumn.Name, out var idColumnName))
                 {
                     var idColumnIndex = inventoryDataGridView.Columns[idColumnName].Index;
@@ -620,7 +621,7 @@ public partial class Form1 : Form
             treeNode.Tag = tagData;
             tree.Nodes.Add(treeNode);
 
-            // Add the TreeNode and its corresponding entity to the dictionary
+            // Add the TreeNode and its corresponding entity to the treeNodeEntityMapping
             TreeNodeEntityMapping[treeNode] = rootNode;
 
             // Add child nodes
@@ -654,7 +655,7 @@ public partial class Form1 : Form
             childTreeNode.Tag = childTagData; // Store the TreeNodeTagData in the Tag property for later use
             parentTreeNode.Nodes.Add(childTreeNode);
 
-            // Add the TreeNode and its corresponding entity to the dictionary
+            // Add the TreeNode and its corresponding entity to the treeNodeEntityMapping
             TreeNodeEntityMapping[childTreeNode] = childEntity;
 
             // Recursively add grandchild nodes
@@ -930,7 +931,7 @@ public partial class Form1 : Form
                 };
                 Cnx.TreeNodeEntities.Add(newEntity);
 
-                // Add the new node and its corresponding entity to the dictionary
+                // Add the new node and its corresponding entity to the treeNodeEntityMapping
                 TreeNodeEntityMapping[newNode] = newEntity;
 
                 // Save changes to the database
@@ -966,7 +967,7 @@ public partial class Form1 : Form
                     var entity = TreeNodeEntityMapping[selectedNode];
                     Cnx.TreeNodeEntities.Remove(entity);
 
-                    // Remove the node and its corresponding entity from the dictionary
+                    // Remove the node and its corresponding entity from the treeNodeEntityMapping
                     TreeNodeEntityMapping.Remove(selectedNode);
 
                     // Save changes to the database
@@ -1304,8 +1305,7 @@ public partial class Form1 : Form
     }
 
 
-    private static HashSet<int> ApplyFilter(TreeView treeView, CheckBox filterCheckBox,
-        CheckBox includeChildrenCheckBox, Func<Inventory, int> propertySelector)
+    private static HashSet<int> ApplyFilter(TreeView treeView, CheckBox filterCheckBox, CheckBox includeChildrenCheckBox, Func<Inventory, int> propertySelector)
     {
         var ids = new HashSet<int>();
 
