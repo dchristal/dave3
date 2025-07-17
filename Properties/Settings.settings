@@ -3,7 +3,7 @@
   <Profiles />
   <Settings>
     <Setting Name="DefaultConnection" Type="System.String" Scope="User">
-      <Value Profile="(Default)">Server=192.168.68.67;Database=delightful;User Id=dave;Password=asdf;TrustServerCertificate=True</Value>
+      <Value Profile="(Default)">Server=YHWH;Database=delightful;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=True;</Value>
     </Setting>
   </Settings>
 </SettingsFile>

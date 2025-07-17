@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using dave3.Model;
 using Equin.ApplicationFramework;
 using Microsoft.Data.SqlClient;
@@ -78,9 +79,8 @@ public partial class Form1 : Form
             var contextMenu = new ContextMenuStrip();
             var moveUpItem = new ToolStripMenuItem("Move Up");
             var moveDownItem = new ToolStripMenuItem("Move Down");
-            contextMenu.Items.AddRange(new ToolStripItem[] { moveUpItem, moveDownItem });
-            LastFocusedTreeView.GotFocus += TreeView_GotFocus;
-            moveUpItem.Click += (_, _) => MoveNode(-1);
+            contextMenu.Items.AddRange(moveUpItem, moveDownItem);
+            LastFocusedTreeView.GotFocus += TreeView_GotFocus; moveUpItem.Click += (_, _) => MoveNode(-1);
             moveDownItem.Click += (_, _) => MoveNode(1);
             return contextMenu;
         }
@@ -117,24 +117,31 @@ public partial class Form1 : Form
 
     public Dictionary<string, string> ColumnToIdColumnMap { get; } = new()
     {
-        { "ProductName", "ProductId" },
-        { "LocationName", "LocationId" }
+        ["ProductName"] = "ProductId",
+        ["LocationName"] = "LocationId"
         // Add more mappings if needed
     };
 
-    public Dictionary<TreeNode, TreeNodeEntity> TreeNodeEntityMapping { get; } = [];
+    public Dictionary<TreeNode, TreeNodeEntity> TreeNodeEntityMapping { get; } = new();
 
-    public bool EnableEdit { get; set; } = true;
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public bool EnableEdit { get; set; } = true;
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public bool Filtering { get; set; }
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public BindingListView<Inventory> InventoryBindingListView { get; set; }
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public int PreviousRowIndex { get; set; }
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public TreeView LastFocusedTreeView { get; set; }
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public bool IsDirty { get; set; }
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public bool IsDeletingRow { get; set; }
 
     private void TreeView_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
