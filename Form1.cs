@@ -1,24 +1,19 @@
+using System.Linq.Expressions;
+using System.Text.RegularExpressions;
 using dave3.Model;
-using dave3.Services;
 using Equin.ApplicationFramework;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using System.IO.Packaging;
-using System.Linq.Expressions;
-using System.Reflection.Emit;
-using System.Text.RegularExpressions;
 
 namespace dave3;
 
 public partial class Form1 : Form
 {
-    // Define the treeNodeEntityMapping at the class level
+    // Define the dictionary at the class level
 
     //private bool _isDirty;
 
     //   private Control _lastFocusedControl;
-    private readonly InventoryRepository _inventoryRepo;
-    private static readonly Dictionary<TreeNode, TreeNodeEntity> treeNodeEntityMapping = new Dictionary<TreeNode, TreeNodeEntity>();
 
     public Form1()
     {
@@ -31,7 +26,6 @@ public partial class Form1 : Form
         BindFilterStatus();
         var contextMenu = SetupTreeViewContextMenu();
         SubscribeToEvents();
-        _inventoryRepo = new InventoryRepository(Cnx);  // Pass your DbContext
 
 
         foreach (var treeView in treeViews)
@@ -84,7 +78,7 @@ public partial class Form1 : Form
             var contextMenu = new ContextMenuStrip();
             var moveUpItem = new ToolStripMenuItem("Move Up");
             var moveDownItem = new ToolStripMenuItem("Move Down");
-            contextMenu.Items.AddRange([moveUpItem, moveDownItem]);
+            contextMenu.Items.AddRange(new ToolStripItem[] { moveUpItem, moveDownItem });
             LastFocusedTreeView.GotFocus += TreeView_GotFocus;
             moveUpItem.Click += (_, _) => MoveNode(-1);
             moveDownItem.Click += (_, _) => MoveNode(1);
@@ -121,14 +115,14 @@ public partial class Form1 : Form
 
     public DelightfulContext Cnx { get; }
 
-    public Dictionary<string, string> ColumnToIdColumnMap { get; } = new Dictionary<string, string>
+    public Dictionary<string, string> ColumnToIdColumnMap { get; } = new()
     {
         { "ProductName", "ProductId" },
         { "LocationName", "LocationId" }
         // Add more mappings if needed
     };
 
-    public Dictionary<TreeNode, TreeNodeEntity> TreeNodeEntityMapping { get; } = treeNodeEntityMapping;
+    public Dictionary<TreeNode, TreeNodeEntity> TreeNodeEntityMapping { get; } = [];
 
     public bool EnableEdit { get; set; } = true;
     public bool Filtering { get; set; }
@@ -164,19 +158,6 @@ public partial class Form1 : Form
         private int previousRowIndex;
     */
 
-    private void ResetTreeViewFilters()
-    {
-        tvFilter1.Checked = false;
-        tvFilter2.Checked = false;
-        tvFilter3.Checked = false;
-        tvIncludeChildren1.Checked = false;
-        tvIncludeChildren2.Checked = false;
-        tvIncludeChildren3.Checked = false;
-        searchTreeView1.Clear();
-        searchTreeView2.Clear();
-        searchTreeView3.Clear();
-    }
-
     private void UpdateButtonState(bool isEnabled)
     {
         if (isEnabled){
@@ -199,7 +180,7 @@ public partial class Form1 : Form
         var newState = !currentState;
 
         // Update the Tag property based on the Text property
-        FilterStatus.Tag = FilterStatus.Text != "update" && newState;
+        FilterStatus.Tag = (FilterStatus.Text == "update") ? false : newState;
 
         // Update the button
         UpdateButtonState(newState);
@@ -270,8 +251,8 @@ public partial class Form1 : Form
 
     private void InventoryDataGridView_UserDeletingRow(object sender, DataGridViewRowCancelEventArgs e)
     {
-        //return;
-       // if (IsDeletingRow) return;
+        return;
+        if (IsDeletingRow) return;
 
         IsDeletingRow = true;
 
@@ -326,7 +307,7 @@ public partial class Form1 : Form
                 var cellAbove = inventoryDataGridView[currentCell.ColumnIndex, currentCell.RowIndex - 1];
                 currentCell.Value = cellAbove.Value;
 
-                // Check if the current column is in the treeNodeEntityMapping
+                // Check if the current column is in the dictionary
                 if (ColumnToIdColumnMap.TryGetValue(currentCell.OwningColumn.Name, out var idColumnName))
                 {
                     var idColumnIndex = inventoryDataGridView.Columns[idColumnName].Index;
@@ -390,15 +371,7 @@ public partial class Form1 : Form
                             break;
                     } // value is 1, 2, or 3
 
-                try
-                {
-                    Cnx.SaveChanges();
-                }
-                catch (DbUpdateConcurrencyException ex)
-                {
-                    MessageBox.Show("Concurrency error: " + ex.Message + "\nReload and try again.");
-                    // Optionally reload data: BuildInventoryDataGridView();
-                }
+                Cnx.SaveChanges();
             }
         }
     }
@@ -644,7 +617,7 @@ public partial class Form1 : Form
             treeNode.Tag = tagData;
             tree.Nodes.Add(treeNode);
 
-            // Add the TreeNode and its corresponding entity to the treeNodeEntityMapping
+            // Add the TreeNode and its corresponding entity to the dictionary
             TreeNodeEntityMapping[treeNode] = rootNode;
 
             // Add child nodes
@@ -678,7 +651,7 @@ public partial class Form1 : Form
             childTreeNode.Tag = childTagData; // Store the TreeNodeTagData in the Tag property for later use
             parentTreeNode.Nodes.Add(childTreeNode);
 
-            // Add the TreeNode and its corresponding entity to the treeNodeEntityMapping
+            // Add the TreeNode and its corresponding entity to the dictionary
             TreeNodeEntityMapping[childTreeNode] = childEntity;
 
             // Recursively add grandchild nodes
@@ -848,17 +821,17 @@ public partial class Form1 : Form
     }
 
 
-    private bool ContainsNode(TreeNode node1, TreeNode node2)
-    {
-        // Check the parent node of the second node.  
-        if (node2.Parent == null) return false;
-        if (node2.Parent.Equals(node1)) return true;
+    //private bool ContainsNode(TreeNode node1, TreeNode node2)
+    //{
+    //    // Check the parent node of the second node.  
+    //    if (node2.Parent == null) return false;
+    //    if (node2.Parent.Equals(node1)) return true;
 
-        // If the parent node is not null or equal to the first node,   
-        // call the ContainsNode method recursively using the parent of   
-        // the second node.  
-        return ContainsNode(node1, node2.Parent);
-    }
+    //    // If the parent node is not null or equal to the first node,   
+    //    // call the ContainsNode method recursively using the parent of   
+    //    // the second node.  
+    //    return ContainsNode(node1, node2.Parent);
+    //}
 
     private void TreeView_GotFocus(object sender, EventArgs e)
     {
@@ -876,32 +849,30 @@ public partial class Form1 : Form
     }
 
     private void TreeView_DragDrop(object sender, DragEventArgs e)
-        {
+    {
         if (e.Data != null && e.Data.GetData(typeof(TreeNode)) is TreeNode movingNode)
         {
             var targetPoint = LastFocusedTreeView.PointToClient(new Point(e.X, e.Y));
             var targetNode = LastFocusedTreeView.GetNodeAt(targetPoint);
-
-            if (targetNode == movingNode || ContainsNode(movingNode, targetNode))
-            {
-                MessageBox.Show("Invalid drop: Cannot create cycles or drop on self.");
-                return;
-            }
 
             // Remove the node from its current position
             movingNode.Remove();
 
             // Insert the node at the new location
             if (targetNode == null)
+                // The node is dropped on the background, add it to the root
                 LastFocusedTreeView.Nodes.Add(movingNode);
             else
+                // The node is dropped on another node, make it a child of that node
                 targetNode.Nodes.Add(movingNode);
 
+            // Get the TreeNodeEntity corresponding to the moved TreeNode
             var movingEntity = TreeNodeEntityMapping[movingNode];
 
+            // Modify the parent of the moved entity based on where the TreeNode was moved in the TreeView
             if (targetNode == null)
             {
-                movingEntity.ParentId = null;
+                movingEntity.ParentId = null; // Or whatever signifies a root node in your model
             }
             else
             {
@@ -909,6 +880,7 @@ public partial class Form1 : Form
                 movingEntity.ParentId = parentEntity.Id;
             }
 
+            // Save changes to the DbContext
             Cnx.SaveChanges();
         }
     }
@@ -955,7 +927,7 @@ public partial class Form1 : Form
                 };
                 Cnx.TreeNodeEntities.Add(newEntity);
 
-                // Add the new node and its corresponding entity to the treeNodeEntityMapping
+                // Add the new node and its corresponding entity to the dictionary
                 TreeNodeEntityMapping[newNode] = newEntity;
 
                 // Save changes to the database
@@ -991,7 +963,7 @@ public partial class Form1 : Form
                     var entity = TreeNodeEntityMapping[selectedNode];
                     Cnx.TreeNodeEntities.Remove(entity);
 
-                    // Remove the node and its corresponding entity from the treeNodeEntityMapping
+                    // Remove the node and its corresponding entity from the dictionary
                     TreeNodeEntityMapping.Remove(selectedNode);
 
                     // Save changes to the database
@@ -1284,21 +1256,6 @@ public partial class Form1 : Form
 
     private void UpdateTreeViewFilteringState()
     {
-        if (SearchInventory.Text.Length > 0)
-        {
-            // Temporarily disable tree filters during global search
-            tvFilter1.Enabled = false;
-            tvFilter2.Enabled = false;
-            tvFilter3.Enabled = false;
-        }
-        else
-        {
-            tvFilter1.Enabled = true;
-            tvFilter2.Enabled = true;
-            tvFilter3.Enabled = true;
-            FilterInventoryByTreeView(); // Reapply if needed
-        }
-
         Filtering = true;
         bindingSource1.EndEdit();
         Cnx.SaveChanges();
@@ -1344,7 +1301,8 @@ public partial class Form1 : Form
     }
 
 
-    private static HashSet<int> ApplyFilter(TreeView treeView, CheckBox filterCheckBox, CheckBox includeChildrenCheckBox, Func<Inventory, int> propertySelector)
+    private static HashSet<int> ApplyFilter(TreeView treeView, CheckBox filterCheckBox,
+        CheckBox includeChildrenCheckBox, Func<Inventory, int> propertySelector)
     {
         var ids = new HashSet<int>();
 
@@ -1369,7 +1327,6 @@ public partial class Form1 : Form
 
     private void FilterInventoryByText()
     {
-        ResetTreeViewFilters();
         tvIncludeChildren1.Checked = false;
         tvIncludeChildren2.Checked = false;
         tvIncludeChildren3.Checked = false;
@@ -1377,7 +1334,9 @@ public partial class Form1 : Form
         tvFilter2.Checked = false;
         tvFilter3.Checked = false;
 
+
         var searchedDescriptionsNotes = ApplyFilter(SearchInventory.Text);
+        //  var bindingListView = new BindingListView<Inventory>(_cnx.Inventories.Local.ToList());
 
         if (searchedDescriptionsNotes.Count == 0)
         {
@@ -1386,49 +1345,41 @@ public partial class Form1 : Form
         }
         else
         {
-            InventoryBindingListView.ApplyFilter(i => searchedDescriptionsNotes.Contains(i.InventoryId));
+            InventoryBindingListView.ApplyFilter(i => searchedDescriptionsNotes.Contains(i.InventoryId))
+                ;
             UpdateButtonState(false);
         }
 
+        //bindingSource1.DataSource = _inventoryBindingListView;
+        //inventoryDataGridView.DataSource = bindingSource1;
         inventoryDataGridView.Refresh();
     }
 
 
-    private async void FilterInventoryByTreeView()
+    private void FilterInventoryByTreeView()
     {
-        //var selectedProductIds = ApplyFilter(treeView1, tvFilter1, tvIncludeChildren1, i => i.ProductId);
-        //var selectedLocations = ApplyFilter(treeView2, tvFilter2, tvIncludeChildren2, i => i.LocationId);
-        //var selectedCategoryIds = ApplyFilter(treeView3, tvFilter3, tvIncludeChildren3, i => i.CategoryId);
-        //// var bindingListView = new BindingListView<Inventory>(_cnx.Inventories.Local.ToList());
+        var selectedProductIds = ApplyFilter(treeView1, tvFilter1, tvIncludeChildren1, i => i.ProductId);
+        var selectedLocations = ApplyFilter(treeView2, tvFilter2, tvIncludeChildren2, i => i.LocationId);
+        var selectedCategoryIds = ApplyFilter(treeView3, tvFilter3, tvIncludeChildren3, i => i.CategoryId);
+        // var bindingListView = new BindingListView<Inventory>(_cnx.Inventories.Local.ToList());
 
-        //if (selectedProductIds.Count == 0 && selectedLocations.Count == 0 && selectedCategoryIds.Count == 0)
-        //{
-        //    InventoryBindingListView.RemoveFilter();
-        //    UpdateButtonState(true);
-        //}
-        //else
-        //{
-        //    InventoryBindingListView.ApplyFilter(i => selectedProductIds.Contains(i.ProductId)
-        //                                              || selectedLocations.Contains(i.LocationId)
-        //                                              || selectedCategoryIds.Contains(i.CategoryId));
-        //    UpdateButtonState(false);
-        //}
+        if (selectedProductIds.Count == 0 && selectedLocations.Count == 0 && selectedCategoryIds.Count == 0)
+        {
+            InventoryBindingListView.RemoveFilter();
+            UpdateButtonState(true);
+        }
+        else
+        {
+            InventoryBindingListView.ApplyFilter(i => selectedProductIds.Contains(i.ProductId)
+                                                      || selectedLocations.Contains(i.LocationId)
+                                                      || selectedCategoryIds.Contains(i.CategoryId));
+            UpdateButtonState(false);
+        }
 
-        ////bindingSource1.DataSource = _inventoryBindingListView;
+        //bindingSource1.DataSource = _inventoryBindingListView;
 
-        //inventoryDataGridView.Refresh();
-        int? prodId = tvFilter1.Checked ? Convert.ToInt32(tv1Tag.Text) : null;
-        int? locId = tvFilter2.Checked ? Convert.ToInt32(tv2Tag.Text) : null;
-        int? catId = tvFilter3.Checked ? Convert.ToInt32(tv3Tag.Text) : null;
-        bool inclChildren = tvIncludeChildren1.Checked || tvIncludeChildren2.Checked || tvIncludeChildren3.Checked;  // Or per-filter
-
-        var filtered = await _inventoryRepo.GetFilteredInventoryAsync(prodId, locId, catId, inclChildren);
-        InventoryBindingListView = new BindingListView<Inventory>(filtered);
-        bindingSource1.DataSource = InventoryBindingListView;
-        inventoryDataGridView.DataSource = bindingSource1;
         inventoryDataGridView.Refresh();
     }
-    
 
 
     private HashSet<int> ApplyFilter(string searchString)
